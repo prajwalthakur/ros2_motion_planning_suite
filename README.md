@@ -16,3 +16,12 @@ List of Motion Planning Algorithms
 List of Obstacle Avoidance Algorithm
 1. Corridor Based Obstacle Avoidance ( can be used with 1,2,3 motion planning )
 2 . Control Barrier Function (CBF) , only be used with non-linear MPC 
+
+# Docker Image Installation 
+1. Change the root directory name in `scripts/deploy/base.sh` 
+2. From root of the directory  run  `./scripts/build/build.sh`
+After above two steps the Docker Image with the name of **mp_ros2** would have been created
+
+# To run the docker Conatiner
+
+3. From root of the directory run `./scripts/deploy/devel.sh`
