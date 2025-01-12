@@ -32,10 +32,9 @@ MIT
 
 
 ## Use Case
-I started this project to study an algorithm and software development for Autonomous Vehicle system by myself. You can also use this repo for your own studying, education, researching and development.  
+I initiated this project to independently study algorithms and software development for autonomous vehicle systems. This repository is also available for your personal use in studying, education, research, or development.
 
-If this project helps your task, please let me know by creating a issue.  
-Any paper, animation, video as your output, always welcome!! It will encourage me to continue this project.  
+If this project supports your work or contributes to your tasks, please feel free to inform me by creating an issue.
 
 
 ## Contribution
