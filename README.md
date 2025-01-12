@@ -25,3 +25,23 @@ After above two steps the Docker Image with the name of **mp_ros2** would have b
 # To run the docker Conatiner
 
 3. From root of the directory run `./scripts/deploy/devel.sh`
+
+
+## License
+MIT  
+
+
+## Use Case
+I started this project to study an algorithm and software development for Autonomous Vehicle system by myself. You can also use this repo for your own studying, education, researching and development.  
+
+If this project helps your task, please let me know by creating a issue.  
+Any paper, animation, video as your output, always welcome!! It will encourage me to continue this project.  
+
+
+## Contribution
+Any contribution by creating an issue or sending a pull request is welcome!! 
+<!-- Please check [this document about how to contribute](/HOWTOCONTRIBUTE.md).   -->
+
+
+## Author
+[Prajwal Thakur](https://github.com/prajwalthakur) 
