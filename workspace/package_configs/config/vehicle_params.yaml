@@ -1,0 +1,17 @@
+# Optionally, if you want to directly match ROS 2’s parameter system, you might do:
+my_vehicle_node:
+  ros__parameters:
+    NX: 5
+    NU: 2
+    T_fwd: 0.001
+    width: 1.2           # in meters
+    length: 2.3          # in meters
+    wheel_radius: 0.35
+    wheel_base: 0.5
+    mass: 1200.0         # in kg
+    default_x_pos: 0.0
+    default_y_pos: 0.0
+    default_yaw: 0.0
+    default_vx: 0.0
+    default_sf: 0.0
+

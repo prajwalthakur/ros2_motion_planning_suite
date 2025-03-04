@@ -1,5 +1,5 @@
 #!/bin/bash
-absolute_path=/home/prajwal/projects/MotionPlanningAlgoROS2/
+absolute_path=/home/prajwal/projects/MotionPlanningAlgoROS2/MotionPlanningAlgoROS2/
 # run_docker() {
 #     # -it is for interactive, tty
 #     # --privileged for accessing /dev contents
