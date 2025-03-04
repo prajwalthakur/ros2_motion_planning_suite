@@ -21,7 +21,7 @@
         struct InputStruct{
                 double sv;
                 double acc;
-        }
+        };
 
 
         class vehicleClass{
@@ -36,7 +36,7 @@
                 double default_sf;
                 double default_sv;
                 double default_acc;
-                
+                double wheelbase;
                 InputStruct input;
                 InputVector inputvector;
                 StateStruct state;
@@ -51,7 +51,7 @@
                 StateStruct VectorToState(const StateVector &) const;
                 InputVector InputToVector(const InputStruct &) const;
                 InputStruct VectorToInput(const InputVector &)const;
-                StateVector fdot(const StateVector & , const InputVector &)
+                StateVector xdot(const StateVector & , const InputVector &);
         };
 
 

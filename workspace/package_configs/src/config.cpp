@@ -3,7 +3,7 @@ namespace vehicle_config{
     vehicleClass::vehicleClass(rclcpp::Node::SharedPtr node){
         node->declare_parameter("NX", 5);
         node->declare_parameter("NU", 2);
-        node->declare_parameter("T_fwd",0.001)
+        node->declare_parameter("T_fwd",0.001);
         node->declare_parameter("default_x_pos", 0.0);
         node->declare_parameter("default_y_pos", 0.0);
         node->declare_parameter("default_yaw", 0.0);
@@ -11,11 +11,11 @@ namespace vehicle_config{
         node->declare_parameter("default_sf", 0.0);
         node->declare_parameter("default_acc",0.0);
         node->declare_parameter("default_sv",0.0);
-
+        node->declare_parameter("wheelbase",0.0);
 
         NX = node->get_parameter("NX").as_int();
         NU = node->get_parameter("NU").as_int();
-        T_fwd = node->get_parameter("T_fwd").as_float()
+        T_fwd = node->get_parameter("T_fwd").as_double();
         
         default_x_pos = node->get_parameter("default_x_pos").as_double();
         default_y_pos = node->get_parameter("default_y_pos").as_double();
@@ -24,7 +24,7 @@ namespace vehicle_config{
         default_sf = node->get_parameter("default_sf").as_double();
         default_acc = node->get_parameter("default_acc").as_double();
         default_sv = node->get_parameter("default_sv").as_double();
-        
+        wheelbase = node->get_parameter("wheelbase").as_double();
         reset();
     }
 
@@ -60,7 +60,7 @@ namespace vehicle_config{
 
 
     StateVector vehicleClass::StateToVector(const StateStruct & state_struct) const{
-        StateVector state_vector
+        StateVector state_vector;
         state_vector(0) = state_struct.x;
         state_vector(1) = state_struct.y;
         state_vector(2) = state_struct.yaw;
@@ -70,7 +70,7 @@ namespace vehicle_config{
     }
 
     InputVector vehicleClass::InputToVector(const InputStruct & input_struct) const{
-        InputVector input_vector
+        InputVector input_vector;
         input_vector(0) = input_struct.sv;
         input_vector(1) = input_struct.acc;
         return input_vector;
@@ -79,33 +79,33 @@ namespace vehicle_config{
 
     StateStruct vehicleClass::VectorToState(const StateVector & statevector) const{
         StateStruct st;
-        st.x = this->statevector(0);
-        st.y = this->statevector(1);
-        st.yaw = this->statevector(2);
-        st.vx = this->statevector(3);
-        st.sf = this->statevector(4);
+        st.x = statevector(0);
+        st.y = statevector(1);
+        st.yaw = statevector(2);
+        st.vx = statevector(3);
+        st.sf = statevector(4);
         return st;
     }
 
 
-    InputStruct vehicleClass::VectorToState(const InputVector & inputvector) const{
+    InputStruct vehicleClass::VectorToInput(const InputVector & inputvector) const{
         InputStruct inpt;
-        inpt.sv = this->inputvector(0);
-        inpt.acc = this->inputvector(1);
-        return st;
+        inpt.sv = inputvector(0);
+        inpt.acc = inputvector(1);
+        return inpt;
     }
 
     StateVector vehicleClass::xdot(const StateVector & statevector, const InputVector & inputvector)
     {
         StateVector statevector_dot;
-        new_statevector.resize(NX);
+        statevector_dot.resize(NX);
 
         auto xk = this->VectorToState(statevector);
-        auto uk = this->InputToVector(inputvector);
+        auto uk = this->VectorToInput(inputvector);
         //xdot,ydot,yawdot,vfodt,sfdot
         statevector_dot(0) = xk.vx*std::cos(xk.yaw);
         statevector_dot(1) = xk.vx*std::sin(xk.yaw);
-        statevector_dot(2) = xk.vx*std::tan(uk.sf);
+        statevector_dot(2) = xk.vx*std::tan(xk.sf)/wheelbase;
         statevector_dot(3) = uk.acc;
         statevector_dot(4) = uk.sv;
         return statevector_dot;
