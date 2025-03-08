@@ -14,6 +14,12 @@ find_package(std_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+
+# extra library 
+find_package(package_configs REQUIRED)
+
+
+
 # hpipm
 # find_library(HPIPM_LIB hpipm PATHS /hpipm/lib REQUIRED)
 # find_library(BLASFEO_LIB blasfeo PATHS /blasfeo/lib REQUIRED)
@@ -45,6 +51,8 @@ target_include_directories(mpc_node PRIVATE /hpipm/include /blasfeo/include)
 # target_include_directories(mpc_node PRIVATE ${HPIPM_INCLUDE_DIR} ${BLASFEO_INCLUDE_DIR})
 target_link_libraries(mpc_node Eigen3::Eigen /hpipm/lib/libhpipm.so /blasfeo/lib/libblasfeo.so -lm )
 
+# Link the extra static library
+target_link_libraries(my_node vehicle_config)
 
 
 install(TARGETS
