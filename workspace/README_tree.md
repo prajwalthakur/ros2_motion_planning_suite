@@ -10,14 +10,16 @@
 │   ├── LICENSE
 │   ├── package.xml
 │   └── README.md
-├── package_configs
+├── project_utils
 │   ├── CMakeLists.txt
 │   ├── config
 │   │   └── vehicle_params.yaml
 │   ├── include
-│   │   └── package_configs
+│   │   └── project_utils
 │   │       ├── integrator_class.hpp
 │   │       └── vehicle_class.hpp
+│   ├── msg
+│   │   └── EigenVector.msg
 │   ├── package.xml
 │   └── src
 │       ├── integrator_class.cpp
@@ -28,10 +30,11 @@
     ├── CMakeLists.txt
     ├── include
     │   └── vehicle_interface
-    │       └── vehicle_interface_node.hpp
+    │       └── vehicle_interface_class.hpp
     ├── package.xml
     └── src
         ├── mpc_node.cpp
+        ├── vehicle_interface_class.cpp
         └── vehicle_interface_node.cpp
 
-12 directories, 22 files
+13 directories, 24 files

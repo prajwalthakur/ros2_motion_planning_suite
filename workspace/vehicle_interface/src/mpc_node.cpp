@@ -7,6 +7,8 @@
 #include "hpipm_d_ocp_qp.h"
 #include "hpipm_d_ocp_qp_sol.h"
 #include "hpipm_timing.h"
+#include <project_utils/vehicle_class.hpp>
+#include <project_utils/msg/eigen_vector.hpp>
 
 class MpcNode : public rclcpp::Node
 {
@@ -21,7 +23,7 @@ public:
            3, 4;
     RCLCPP_INFO(this->get_logger(), "Eigen matrix:\n%f %f\n%f %f",
                 mat(0, 0), mat(0, 1), mat(1, 0), mat(1, 1));
-
+    project_utils::msg::EigenVector gg;
     // Example HPIPM usage (pseudo-code)
     // struct d_ocp_qp ocp_qp;
     // struct d_ocp_qp_ipm_arg arg;

@@ -1,5 +1,5 @@
 
-#include "package_configs/integrator_class.hpp"
+#include "project_utils/integrator_class.hpp"
 StateVector IntegratorClass::rk4Integrator(const StateVector& x, const InputVector& u,double ts) const
 {
 
@@ -18,8 +18,9 @@ StateVector IntegratorClass::efIntegrator(const StateVector& x, const InputVecto
     return x_next;
 }
 
-void IntegratorClass::simNextState(const StateVector& x, const InputVector& u,double ts)const{
-    StateVector x_next = x;
+void IntegratorClass::simNextState( const InputVector& u,double ts)const{
+
+    StateVector x_next = this->getStates_();
     const int integration_steps = (int)(ts/this->fine_time_step_);
     for(int i=0;i<integration_steps;i++){
         x_next=this->rk4Integrator(x_next,u,fine_time_step_);

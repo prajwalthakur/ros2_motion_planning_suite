@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>package_configs</name>
+  <name>project_utils</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="prajwalthakur98@gmail.com">root</maintainer>
@@ -9,11 +9,18 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>eigen3_cmake_module</depend>
+  <depend>rosidl_default_generators</depend>
+
   
+  <!-- Add for message generation -->
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
+    <rosidl_generate_interfaces/>
   </export>
+
 </package>

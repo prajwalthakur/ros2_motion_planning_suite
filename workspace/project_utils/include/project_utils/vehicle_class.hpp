@@ -48,6 +48,8 @@ class VehicleClass{
         void reset();
         void setState(const StateVector &);
         void setInput(const InputVector &);
+        const StateVector& getState() const;
+        const StateVector& getInput() const;
         StateVector StateToVector(const StateStruct & ) const;
         StateStruct VectorToState(const StateVector &) const;
         InputVector InputToVector(const InputStruct &) const;

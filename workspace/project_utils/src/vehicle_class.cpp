@@ -1,4 +1,4 @@
-#include "package_configs/vehicle_class.hpp"
+#include "project_utils/vehicle_class.hpp"
 VehicleClass::VehicleClass(rclcpp::Node::SharedPtr node){
     node->declare_parameter("NX", 5);
     node->declare_parameter("NU", 2);
@@ -56,6 +56,13 @@ void VehicleClass::setInput(const InputVector & input_vector){
     this->input.acc = this->inputvector(0);
 }
 
+const StateVector& VehicleClass::getState() const {
+    return this->statevector;
+}
+
+const StateVector& VehicleClass::getInput() const {
+    return this->inputvector;
+}
 
 
 StateVector VehicleClass::StateToVector(const StateStruct & state_struct) const{

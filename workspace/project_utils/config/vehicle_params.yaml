@@ -1,4 +1,3 @@
-# Optionally, if you want to directly match ROS 2’s parameter system, you might do:
 my_vehicle_node:
   ros__parameters:
     NX: 5
