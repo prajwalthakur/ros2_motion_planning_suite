@@ -20,11 +20,12 @@ StateVector IntegratorClass::efIntegrator(const StateVector& x, const InputVecto
 
 void IntegratorClass::simNextState( const InputVector& u,double ts)const{
 
-    StateVector x_next = this->getStates_();
+    StateVector x_next = this->getState_();
     const int integration_steps = (int)(ts/this->fine_time_step_);
     for(int i=0;i<integration_steps;i++){
         x_next=this->rk4Integrator(x_next,u,fine_time_step_);
         }
-    this->setStates_(x_next);
+    //RCLCPP_INFO(this->get_logger(), "rk4 called");
+    this->setState_(x_next);
     this->setInput_(u);
 }

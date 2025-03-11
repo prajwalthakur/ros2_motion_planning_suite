@@ -1,21 +1,18 @@
 #include "project_utils/vehicle_class.hpp"
 VehicleClass::VehicleClass(rclcpp::Node::SharedPtr node){
-    node->declare_parameter("NX", 5);
-    node->declare_parameter("NU", 2);
-    node->declare_parameter("T_fwd",0.001);
-    node->declare_parameter("default_x_pos", 0.0);
-    node->declare_parameter("default_y_pos", 0.0);
-    node->declare_parameter("default_yaw", 0.0);
-    node->declare_parameter("default_vx", 0.0);
-    node->declare_parameter("default_sf", 0.0);
-    node->declare_parameter("default_acc",0.0);
-    node->declare_parameter("default_sv",0.0);
-    node->declare_parameter("wheelbase",0.0);
+    // node->declare_parameter("NX", 5);
+    // node->declare_parameter("NU", 2);
+    // node->declare_parameter("default_x_pos", 0.0);
+    // node->declare_parameter("default_y_pos", 0.0);
+    // node->declare_parameter("default_yaw", 0.0);
+    // node->declare_parameter("default_vx", 0.0);
+    // node->declare_parameter("default_sf", 0.0);
+    // node->declare_parameter("default_acc",0.0);
+    // node->declare_parameter("default_sv",0.0);
+    // node->declare_parameter("wheelbase",0.0);
 
     NX = node->get_parameter("NX").as_int();
     NU = node->get_parameter("NU").as_int();
-    T_fwd = node->get_parameter("T_fwd").as_double();
-    
     default_x_pos = node->get_parameter("default_x_pos").as_double();
     default_y_pos = node->get_parameter("default_y_pos").as_double();
     default_yaw = node->get_parameter("default_yaw").as_double();
@@ -96,8 +93,8 @@ StateStruct VehicleClass::VectorToState(const StateVector & statevector) const{
 
 InputStruct VehicleClass::VectorToInput(const InputVector & inputvector) const{
     InputStruct inpt;
-    inpt.sv = inputvector(0);
-    inpt.acc = inputvector(1);
+    inpt.acc = inputvector(0);
+    inpt.sv = inputvector(1);
     return inpt;
 }
 

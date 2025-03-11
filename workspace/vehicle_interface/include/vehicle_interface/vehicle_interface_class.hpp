@@ -6,17 +6,24 @@
 #include <chrono>
 using namespace std::chrono_literals;
 
-class VehicleInterfaceNode: public rclcpp::Node, public std::enable_shared_from_this<VehicleInterfaceNode>{
+class VehicleInterface: public rclcpp::Node{
     public:
-        VehicleInterfaceNode();
+        VehicleInterface();
+        void on_activate();
     private: 
         std::shared_ptr<VehicleClass> vehicle_;
         std::shared_ptr<IntegratorClass> integrator_;
         rclcpp::Publisher<project_utils::msg::EigenVector>::SharedPtr state_publisher_;
-        rclcpp::Subscription<std_msgs::msg::String>::SharedPtr control_subscriber_;
-        rclcpp::TimerBase::SharedPtr timer_;
-        project_utils::msg::EigenVector control_ref;
+        rclcpp::Subscription<project_utils::msg::EigenVector>::SharedPtr control_subscriber_;
+        rclcpp::TimerBase::SharedPtr state_update_timer_;
+        rclcpp::TimerBase::SharedPtr state_pub_timer_;
+        InputVector control_ref;
         void state_pub_timer_callback(); 
         void state_update_timer_callback();
         void control_sub_callback(const project_utils::msg::EigenVector::SharedPtr& msg);
-}
+        int NX;
+        int NU;
+        double integration_deltaT;
+        double sim_deltaT;
+        double state_publish_deltaT;
+};

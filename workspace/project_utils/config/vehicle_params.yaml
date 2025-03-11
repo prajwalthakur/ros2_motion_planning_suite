@@ -1,16 +1,20 @@
-my_vehicle_node:
+vehicle_interface_node:
   ros__parameters:
-    NX: 5
-    NU: 2
-    T_fwd: 0.001
+    NX: 5                 # number of states currently : x,y,yaw,vx,steering
+    NU: 2                 # control acc,steering_dot
+    integration_deltaT: 0.001     #  rk4/euler integration time-step
+    sim_deltaT: 0.01             # state update time
+    state_publish_deltaT: 0.05  # state publisher delta-time
     width: 1.2           # in meters
     length: 2.3          # in meters
     wheel_radius: 0.35
-    wheel_base: 0.5
+    wheelbase: 0.5
     mass: 1200.0         # in kg
     default_x_pos: 0.0
     default_y_pos: 0.0
     default_yaw: 0.0
     default_vx: 0.0
     default_sf: 0.0
+    default_acc: 0.0
+    default_sv:  0.0
 

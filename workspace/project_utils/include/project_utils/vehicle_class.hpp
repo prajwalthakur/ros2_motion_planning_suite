@@ -12,9 +12,6 @@ struct StateStruct{
     double yaw;
     double vx;
     double sf;
-    
-    // double yaw_dt;
-    // double beta;
 };
 
 struct InputStruct{
@@ -40,9 +37,6 @@ class VehicleClass{
         InputVector inputvector;
         StateStruct state;
         StateVector statevector;
-        //IntegratorClass integrator_;
-
-
     public:
         explicit VehicleClass(rclcpp::Node::SharedPtr node);
         void reset();
@@ -53,7 +47,7 @@ class VehicleClass{
         StateVector StateToVector(const StateStruct & ) const;
         StateStruct VectorToState(const StateVector &) const;
         InputVector InputToVector(const InputStruct &) const;
-        InputStruct VectorToInput(const InputVector &)const;
+        InputStruct VectorToInput(const InputVector &) const;
         StateVector xdot(const StateVector & , const InputVector &) const;
 };
 
