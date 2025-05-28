@@ -3,50 +3,6 @@ A C++ based ROS2 software stack for rapid testing of motion planning, obstacle a
 1. A modularized package supporting various vehicle dynamics/kinematics models. 
 2. The vehicle class is implemented as a shared/static library and leverages CppAD for automatic differentiation, enabling seamless integration with existing planning algorithms.
 
-```
-.
-├── eigen3_cmake_module
-│   ├── CHANGELOG.rst
-│   ├── cmake
-│   │   └── Modules
-│   │       └── FindEigen3.cmake
-│   ├── CMakeLists.txt
-│   ├── CONTRIBUTING.md
-│   ├── eigen3_cmake_module-extras.cmake
-│   ├── LICENSE
-│   ├── package.xml
-│   └── README.md
-├── project_utils
-│   ├── CMakeLists.txt
-│   ├── config
-│   │   └── vehicle_params.yaml
-│   ├── include
-│   │   └── project_utils
-│   │       ├── integrator_class.hpp
-│   │       └── vehicle_class.hpp
-│   ├── msg
-│   │   └── EigenVector.msg
-│   ├── package.xml
-│   └── src
-│       ├── integrator_class.cpp
-│       └── vehicle_class.cpp
-├── README_tree.md
-├── test_jax.py
-└── vehicle_interface
-    ├── CMakeLists.txt
-    ├── include
-    │   └── vehicle_interface
-    │       └── vehicle_interface_class.hpp
-    ├── launch
-    │   └── vehicle_interface.launch.py
-    ├── package.xml
-    └── src
-        ├── mpc_node.cpp
-        ├── vehicle_interface_class.cpp
-        └── vehicle_interface_node.cpp
-
-14 directories, 25 files
-```
 
 
 This repository contains the various motion planning algorthims , including obstacle avoidance strategies in ros2 humble.
@@ -75,6 +31,11 @@ After above two steps the Docker Image with the name of **mp_ros2** would have b
 
 3. From root of the directory run `./scripts/deploy/devel.sh`
 
+# steps to launch the demo
+1. run `ros2 launch vehicle_interface vehicle_interface.launch.py` to launch the vehicle interface node
+2. run `ros2 launch visualizer visualizer.launch.py` to visualize the sim
+3. run `ros2 topic pub /ego_command project_utils/msg/EigenVector data:\ [0.04,-0.002]\ `  input command (acc, steering angle)
+
 
 ## License
 MIT  
@@ -91,12 +52,19 @@ Any contribution by creating an issue or sending a pull request is welcome!!
 <!-- Please check [this document about how to contribute](/HOWTOCONTRIBUTE.md).   -->
 
 
+
+
+## Update-2
+## visualizer node has been implemented
+
+
 ## Update-1
 ## vehicle Interface node has been implemented
 
 
 
-https://github.com/user-attachments/assets/4257c3ff-0bd3-4313-8ca6-d322eb27ab34
+<!-- https://github.com/user-attachments/assets/4257c3ff-0bd3-4313-8ca6-d322eb27ab34 -->
+
 
 
 

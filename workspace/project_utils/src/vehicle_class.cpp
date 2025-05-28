@@ -20,7 +20,7 @@ VehicleClass::VehicleClass(rclcpp::Node::SharedPtr node){
     default_sf = node->get_parameter("default_sf").as_double();
     default_acc = node->get_parameter("default_acc").as_double();
     default_sv = node->get_parameter("default_sv").as_double();
-    wheelbase = node->get_parameter("wheelbase").as_double();
+    veh_wheelbase = node->get_parameter("veh_wheelbase").as_double();
     reset();
 }
 
@@ -108,7 +108,7 @@ StateVector VehicleClass::xdot(const StateVector & statevector, const InputVecto
     //xdot,ydot,yawdot,vfodt,sfdot
     statevector_dot(0) = xk.vx*std::cos(xk.yaw);
     statevector_dot(1) = xk.vx*std::sin(xk.yaw);
-    statevector_dot(2) = xk.vx*std::tan(xk.sf)/wheelbase;
+    statevector_dot(2) = xk.vx*std::tan(xk.sf)/veh_wheelbase;
     statevector_dot(3) = uk.acc;
     statevector_dot(4) = uk.sv;
     return statevector_dot;

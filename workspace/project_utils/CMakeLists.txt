@@ -6,17 +6,38 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(eigen3_cmake_module REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(rosidl_default_generators REQUIRED)  # Required for message dependencies
+# define the package and find it in find_package
+set(THIS_PACKAGE_INCLUDE_DEPENDS
+  ament_cmake
+  rclcpp
+  eigen3_cmake_module
+  Eigen3
+  rosidl_default_generators
+)
 
-# Create a static library from source files
-add_library(project_utils_lib STATIC 
+foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
+  find_package(${Dependency} REQUIRED)
+endforeach()
+
+# Create a dynamic library from source files (.so)
+add_library(project_utils_lib SHARED 
   src/vehicle_class.cpp 
   src/integrator_class.cpp
+)
+
+
+
+target_compile_features(project_utils_lib PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+# Define message files
+set(MSG_FILES
+  "msg/EigenVector.msg"
+)
+
+# Generate the message interfaces (target name is based on the project name)
+# Expose generated message headers to other packages
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${MSG_FILES}
 )
 
 # Specify include directories for both build and install interfaces
@@ -25,47 +46,50 @@ target_include_directories(project_utils_lib PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(project_utils_lib rclcpp Eigen3)
-
-# Install the static library with export name "project_utils_export"
-install(TARGETS project_utils_lib
-  EXPORT project_utils_export
-  ARCHIVE DESTINATION lib
-)
-
-# Install header files
-install(
-  DIRECTORY include/project_utils/
-  DESTINATION include/project_utils
-)
-
-# Install configuration files
-install(
-  DIRECTORY config/
-  DESTINATION share/${PROJECT_NAME}/config
-)
-
-# Define message files
-set(MSG_FILES
-  "msg/EigenVector.msg"
-)
-
-# Generate the message interfaces (target name is based on the project name)
-rosidl_generate_interfaces(${PROJECT_NAME}
-  ${MSG_FILES}
-)
-
-# Expose generated message headers to other packages
 target_include_directories(project_utils_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
 
+ament_target_dependencies(project_utils_lib PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+
+
+
+# Install header files
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+# Install configuration files
+install(
+  DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config
+
+)
+
+
+install(
+  DIRECTORY maps/
+  DESTINATION share/${PROJECT_NAME}/maps
+  
+)
+
+
+# Install the dynamic library with export name "export_${PROJECT_NAME}"
+install(TARGETS project_utils_lib
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+)
+
+
+
 
 # Export targets and dependencies using only ament_export_targets (the ament_export_interfaces call has been removed)
-ament_export_targets(project_utils_export HAS_LIBRARY_TARGET)
-ament_export_dependencies(rclcpp Eigen3 rosidl_default_runtime)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Setup testing dependencies if testing is enabled
 if(BUILD_TESTING)

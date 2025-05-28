@@ -1,4 +1,6 @@
 
+#ifndef PROJECT_UTILS_VEHICLE_CLASS_HPP_
+#define PROJECT_UTILS_VEHICLE_CLASS_HPP_
 #pragma once
 #include <rclcpp/rclcpp.hpp>
 #include <Eigen/Dense>
@@ -32,7 +34,7 @@ class VehicleClass{
         double default_sf;
         double default_sv;
         double default_acc;
-        double wheelbase;
+        double veh_wheelbase;
         InputStruct input;
         InputVector inputvector;
         StateStruct state;
@@ -50,8 +52,7 @@ class VehicleClass{
         InputStruct VectorToInput(const InputVector &) const;
         StateVector xdot(const StateVector & , const InputVector &) const;
 };
-
-
+#endif
 
 
 

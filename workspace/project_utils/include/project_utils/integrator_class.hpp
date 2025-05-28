@@ -1,16 +1,17 @@
+
+#ifndef PROJECT_UTILS_INTEGRATOR_CLASS_HPP_
+#define PROJECT_UTILS_INTEGRATOR_CLASS_HPP_
 #pragma once
 #include <rclcpp/rclcpp.hpp>
 #include <Eigen/Dense>
 #include <cmath>
 #include <functional>
 typedef Eigen::VectorXd StateVector;
-typedef Eigen::VectorXd InputVector;
+typedef Eigen::VectorXd InputVector; //the size is determined at runtime rather than compile time.
+
 
 class IntegratorClass{
     public:
-        // explicit IntegratorClass(std::function<StateVector(const StateVector&, const InputVector&,double fine_time_step)> dynamics) 
-        //     : dynamics_(dynamics) {}
-
         explicit IntegratorClass(std::function<StateVector(const StateVector&, const InputVector&)> dynamics , 
                 std::function<const StateVector&()> getState,
                 std::function<void(const StateVector&)> setState,
@@ -28,3 +29,4 @@ class IntegratorClass{
         std::function<void(const InputVector&)> setInput_;
         std::function<const StateVector&()> getState_;
 };
+#endif

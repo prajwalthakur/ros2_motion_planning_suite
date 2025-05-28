@@ -13,9 +13,9 @@ def generate_launch_description():
         default_value=os.path.join(util_dir, 'config', 'vehicle_params.yaml'),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
     
-    map_dir = DeclareLaunchArgument(
-        'map_file',
-        default_value=os.path.join(util_dir,"/maps"),
+    declare_map_dir_cmd = DeclareLaunchArgument(
+        'map_dir',
+        default_value=os.path.join(util_dir,"maps"),
         description='Full path to the ROS2 map dir')
           
     # prefix = ["gdbserver localhost:3000"],
@@ -23,16 +23,19 @@ def generate_launch_description():
     load_nodes = GroupAction(
         actions = [
             Node(
-                package='vehicle_interface',
-                executable='vehicle_interface_node',
-                name='vehicle_interface_node',
+                package='visualizer',
+                executable='visualizer_node',
+                name='visualizer_node',
                 output='screen',
-                parameters=[LaunchConfiguration('params_file')],
+                parameters=[LaunchConfiguration('params_file'),
+                            { 'map_dir': LaunchConfiguration('map_dir') }
+                            ],
                 )
             ]  
     )
     ld = LaunchDescription()
     ld.add_action(declare_params_file_cmd)
+    ld.add_action(declare_map_dir_cmd)
     ld.add_action(load_nodes)
     
     return ld

@@ -5,21 +5,15 @@
 VehicleInterface::VehicleInterface():Node("vehicle_interface_node",rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)) {
 
     RCLCPP_INFO(this->get_logger(),"vehicle interface node started");
-    //RCLCPP_INFO(this->get_logger(), "NX: %d", static_cast<int>(this->get_parameter("NX").as_int()));
-
-    // this->declare_parameter("NX", 5);
-    // this->declare_parameter("NU", 2);
-    // this->declare_parameter("integration_deltaT",0.001);
-    // this->declare_parameter("sim_deltaT",0.01);
-    // this->declare_parameter("state_publish_deltaT",0.05);
-    NX = this->get_parameter("NX").as_int();
-    NU = this->get_parameter("NU").as_int();
-    integration_deltaT = this->get_parameter("integration_deltaT").as_double();
-    sim_deltaT = this->get_parameter("sim_deltaT").as_double();
-    state_publish_deltaT =  this->get_parameter("state_publish_deltaT").as_double();
-    control_ref=Eigen::VectorXd::Zero(NU);
-
-
+    nx = this->get_parameter("NX").as_int();
+    nu = this->get_parameter("NU").as_int();
+    m_integration_delta_t = this->get_parameter("integration_deltaT").as_double();
+    m_sim_delta_t = this->get_parameter("sim_deltaT").as_double();
+    m_state_publish_delta_t =  this->get_parameter("state_publish_deltaT").as_double();
+    m_default_acc = this->get_parameter("default_acc").as_double();
+    m_default_sv = this->get_parameter("default_sv").as_double();
+    m_control_ref = Eigen::VectorXd(nu);  
+    m_control_ref<<m_default_acc,m_default_sv; // initialization
 }
 
 
@@ -28,50 +22,53 @@ void VehicleInterface::state_pub_timer_callback() {
     RCLCPP_INFO(this->get_logger(), " state Publisher Timer triggered");
 
     project_utils::msg::EigenVector msg;
-    StateVector state = vehicle_->getState(); 
+    StateVector state = m_vehicle->getState(); 
     msg.data = std::vector<double>(state.data(), state.data() + state.size());
     
-    state_publisher_->publish(msg);
+    m_state_publisher->publish(msg);
 }
 
 
 void VehicleInterface::state_update_timer_callback(){
     RCLCPP_INFO(this->get_logger(), " State Update Timer triggered");
-    integrator_->simNextState(control_ref,sim_deltaT);
-
+    m_integrator->simNextState(m_control_ref,m_sim_delta_t);
 }
 
 void VehicleInterface::control_sub_callback(const project_utils::msg::EigenVector::SharedPtr& msg){
-    control_ref = Eigen::Map<Eigen::VectorXd>(msg->data.data(), msg->data.size());
+    m_control_ref = Eigen::Map<Eigen::VectorXd>(msg->data.data(), msg->data.size());
+    
 }
 
 
-
+/**
+ * @brief VehicleInterface activation function to intialize 
+ * m_vehicle, m_integrator, publisher and subscriber
+ */
 void VehicleInterface::on_activate() {
-    // Now `shared_from_this()` should work since the node is fully constructed
-    vehicle_ = std::make_shared<VehicleClass>(shared_from_this()); // shared pointer to itself , make sure not to create a new reference from (this) pointer
-    integrator_ = std::make_shared<IntegratorClass>( 
+    // shared pointer to itself , make sure not to create a new reference from (this) pointer
+    m_vehicle = std::make_shared<VehicleClass>(shared_from_this()); 
+    m_integrator = std::make_shared<IntegratorClass>( 
         [this](const StateVector& state, const InputVector& input) -> StateVector {
-        return vehicle_->xdot(state, input);
+        return m_vehicle->xdot(state, input);
         },
         [this]() -> const StateVector& {
-        return vehicle_->getState();
+        return m_vehicle->getState();
         },
         [this](const StateVector& state) -> void {
-        return vehicle_->setState(state);
+        return m_vehicle->setState(state);
         },
         [this](const InputVector& input) -> void {
-        return vehicle_->setInput(input);
+        return m_vehicle->setInput(input);
         },
-        integration_deltaT
+        m_integration_delta_t
     );
     
     
-    state_publisher_  =  this->create_publisher<project_utils::msg::EigenVector>("/ego_state",10);
-    control_subscriber_ = this->create_subscription<project_utils::msg::EigenVector>("/ego_command",10,
+    m_state_publisher  =  this->create_publisher<project_utils::msg::EigenVector>("/ego_state",10);
+    m_control_subscriber = this->create_subscription<project_utils::msg::EigenVector>("/ego_command",10,
                             [this](const project_utils::msg::EigenVector::SharedPtr msg ){this->control_sub_callback(msg);});    
     
-    state_update_timer_ = this->create_wall_timer(std::chrono::duration<double>(sim_deltaT),[this](){this->state_update_timer_callback();});
-    state_pub_timer_ = this->create_wall_timer(std::chrono::duration<double>(state_publish_deltaT),[this](){this->state_pub_timer_callback();});
+    m_state_update_timer = this->create_wall_timer(std::chrono::duration<double>(m_sim_delta_t),[this](){this->state_update_timer_callback();});
+    m_state_pub_timer = this->create_wall_timer(std::chrono::duration<double>(m_state_publish_delta_t),[this](){this->state_pub_timer_callback();});
     
 }
