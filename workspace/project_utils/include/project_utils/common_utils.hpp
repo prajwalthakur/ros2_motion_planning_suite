@@ -11,14 +11,11 @@
 #include <vector>
 #include <string>
 #include <sstream>
-
+typedef Eigen::Map<Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> MapArrayXfRow;
 typedef Eigen::Map<Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>> MapMatrixfRow;
 typedef Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> MatrixXfRow;
 using AXXf = Eigen::ArrayXXf;
 using AXf = Eigen::ArrayXf;       // column vector
-
-// typedef Matrix< float, Dynamic, 3 > 	Eigen::MatrixX3f
-void load_map(std::string, std::vector<float> &, MapMatrixfRow &);
+void load_map(std::string, std::vector<float> &, MapArrayXfRow &);
 static int NUMCOL =3;
-
 #endif

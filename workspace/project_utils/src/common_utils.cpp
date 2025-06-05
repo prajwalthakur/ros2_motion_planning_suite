@@ -1,5 +1,8 @@
 #include "project_utils/common_utils.hpp"
-void load_map(std::string map_path, std::vector<float>& values_buf, MapMatrixfRow& mat_map_out){
+// typedef Eigen::Map<
+//           Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+//         > MapArrayXfRow;
+void load_map(std::string map_path, std::vector<float>& values_buf, MapArrayXfRow & mat_map_out){
 
     std::ifstream file(map_path); //map_path is  a string to the .csv file containing
     std::string line;
@@ -19,6 +22,6 @@ void load_map(std::string map_path, std::vector<float>& values_buf, MapMatrixfRo
     // );
     // MatrixXfRow mat(rows, NUMCOL);
     // mat = mat_map;   // this does a copy
-    new (&mat_map_out) MapMatrixfRow(values_buf.data(), rows, NUMCOL);
+    new (&mat_map_out) MapArrayXfRow(values_buf.data(), rows, NUMCOL);
     return;
 }

@@ -45,16 +45,24 @@ target_link_libraries(qp_mpc_class
 # =============================
 # Build qp_mpc_node
 # =============================
-add_executable(qp_mpc_node src/qp_mpc_node.cpp)
-target_include_directories(qp_mpc_node PUBLIC
+add_executable(qp_mpc_planner_node src/qp_mpc_node.cpp)
+target_include_directories(qp_mpc_planner_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(qp_mpc_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(qp_mpc_planner_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-target_link_libraries(qp_mpc_node qp_mpc_class)
+target_link_libraries(qp_mpc_planner_node qp_mpc_class)
 
-install(TARGETS qp_mpc_node
+install(TARGETS qp_mpc_planner_node
   DESTINATION lib/${PROJECT_NAME})
+
+# =============================
+# Install Launch Files and Config Files
+# =============================
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
