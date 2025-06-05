@@ -23,6 +23,7 @@ endforeach()
 add_library(project_utils_lib SHARED 
   src/vehicle_class.cpp 
   src/integrator_class.cpp
+  src/common_utils.cpp
 )
 
 
