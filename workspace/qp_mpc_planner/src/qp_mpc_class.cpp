@@ -14,7 +14,7 @@ QpMpc::QpMpc():Node("qp_mpc_planner_node") {
 
 }
 
-Eigen::Index QpMpc::find_closest_point(MapArrayXfRow& path_array, StateVector& ego_state){
+Eigen::Index QpMpc::find_closest_point(MapArrayXfRow& path_array, Eigen::Array3f& ego_state){
     
     // get the position of the ego vehicle
     AXf current_ego_pos(2);
@@ -142,7 +142,9 @@ void QpMpc::ref_wp_section(int idx_int, int path_num_points, const Eigen::ArrayX
 
 
 void QpMpc::find_ref_path( StateVector& ego_state){
-    Eigen::Index idx = find_closest_point(mat_path_points, ego_state);
+    Eigen::Array3f ego_pose;
+    ego_pose<<ego_state(0),ego_state(1),ego_state(2);
+    Eigen::Index idx = find_closest_point(mat_path_points, ego_pose);
     int idx_int  = static_cast<int>(idx);
     int total_rows = static_cast<int>(mat_path_points.rows());
     int n = std::min(total_rows,path_num_points);
@@ -150,15 +152,17 @@ void QpMpc::find_ref_path( StateVector& ego_state){
     Eigen::ArrayXXf ref_wp(n, 2);
     ref_wp_section(idx_int, path_num_points, mat_path_points,ref_wp);
     PathDef path_def =   ref_wp_spline(ref_wp);
+    Eigen::ArrayXXf obs_poses = extract_near_by_obs(ego_pose,m_dist_threshold);
+    RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<obs_poses);
     //Eigen::ArrayXXf ref_pose(path_def.num_points,3); //x,y,yaw
 
 
 
-    Eigen::Matrix<float,3,1> XYZPhi = path_def.cs_pose(path_def.arc_length);
-    float x_s   = XYZPhi(0);
-    float y_s   = XYZPhi(1);
-    float phi_s = XYZPhi(2);
-    float arc_length = path_def.arc_length;
-    RCLCPP_INFO_STREAM(this->get_logger(), "poses" <<path_def.ref_poses << "x_s = " <<  x_s << ", y_s = " << y_s<< "phi_s "<< phi_s<< "arc-length"<<arc_length);
+    // Eigen::Matrix<float,3,1> XYZPhi = path_def.cs_pose(path_def.arc_length);
+    // float x_s   = XYZPhi(0);
+    // float y_s   = XYZPhi(1);
+    // float phi_s = XYZPhi(2);
+    // float arc_length = path_def.arc_length;
+    // RCLCPP_INFO_STREAM(this->get_logger(), "poses" <<path_def.ref_poses << "x_s = " <<  x_s << ", y_s = " << y_s<< "phi_s "<< phi_s<< "arc-length"<<arc_length);
 
 }

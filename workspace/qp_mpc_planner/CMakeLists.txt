@@ -1,11 +1,23 @@
 cmake_minimum_required(VERSION 3.8)
 project(qp_mpc_planner)
 
+# # 1) Force a Debug build by default (so -g is applied).
+# if(NOT CMAKE_BUILD_TYPE)
+#   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose build type: Debug or Release" FORCE)
+# endif()
+
+# # 2) Enable verbose make (print full compiler/linker commands).
+# set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# # 3) Ensure -g -O0 is used for GCC/Clang
+# if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#   add_compile_options(-g -O0)
+# endif()
+
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_compile_options(-Wall -Wextra -Wpedantic)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -30,6 +42,7 @@ endforeach()
 # =============================
 add_library(qp_mpc_class
   src/qp_mpc_class.cpp
+  src/get_obs_pose.cpp
 )
 target_include_directories(qp_mpc_class PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

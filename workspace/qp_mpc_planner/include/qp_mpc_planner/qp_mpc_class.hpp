@@ -8,6 +8,8 @@
 #include <project_utils/vehicle_class.hpp>
 #include <project_utils/msg/eigen_vector.hpp>
 #include <project_utils/common_utils.hpp>
+
+#include <qp_mpc_planner/get_obs_pose.hpp>
 #include <chrono>
 #include <unsupported/Eigen/Splines>
 struct PathDef{
@@ -33,9 +35,10 @@ class QpMpc: public rclcpp::Node{
         rclcpp::Subscription<project_utils::msg::EigenVector>::SharedPtr m_state_subscriber;
         InputVector m_control_ref;
         rclcpp::TimerBase::SharedPtr m_control_pub_timer;
+        float m_dist_threshold = 4.0 ;
     public:
         void ref_wp_section(int , int, const Eigen::ArrayXXf & ,Eigen::ArrayXXf& );
-        Eigen::Index find_closest_point(MapArrayXfRow& ,StateVector&);
+        Eigen::Index find_closest_point(MapArrayXfRow& ,Eigen::Array3f&);
         void find_ref_path( StateVector& );
         PathDef ref_wp_spline(const Eigen::ArrayXXf&);
         AXXf stack(const AXXf & , const AXXf &, char );
