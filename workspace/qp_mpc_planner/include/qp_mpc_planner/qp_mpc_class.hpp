@@ -11,8 +11,13 @@
 #include <chrono>
 #include <unsupported/Eigen/Splines>
 struct PathDef{
-
-    AXf cs_x_path,cs_y_path,cs_phi_path,arc_length, arc_vec;
+    Eigen::Spline<float, 3> cs_pose;
+    float arc_length;
+    Eigen::RowVectorXf arc_vec; 
+    int num_points;
+    Eigen::Spline<float, 1> cs_x;
+    Eigen::ArrayXXf ref_poses;
+    //Eigen::Matrix<float,3,-1> ref_pose;
 };
 
 
@@ -29,11 +34,13 @@ class QpMpc: public rclcpp::Node{
         InputVector m_control_ref;
         rclcpp::TimerBase::SharedPtr m_control_pub_timer;
     public:
+        void ref_wp_section(int , int, const Eigen::ArrayXXf & ,Eigen::ArrayXXf& );
         Eigen::Index find_closest_point(MapArrayXfRow& ,StateVector&);
         void find_ref_path( StateVector& );
-        PathDef ref_wp_spline(Eigen::ArrayXXf&);
+        PathDef ref_wp_spline(const Eigen::ArrayXXf&);
+        AXXf stack(const AXXf & , const AXXf &, char );
     private:
-        int path_num_points = 100;
+        int path_num_points = 30;
 
 };  
 
