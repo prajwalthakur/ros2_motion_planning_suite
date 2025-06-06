@@ -154,6 +154,10 @@ void QpMpc::find_ref_path( StateVector& ego_state){
     PathDef path_def =   ref_wp_spline(ref_wp);
     Eigen::ArrayXXf obs_poses = extract_near_by_obs(ego_pose,m_dist_threshold);
     RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<obs_poses);
+
+    size_t obs_len = obs_poses.rows();
+
+    
     //Eigen::ArrayXXf ref_pose(path_def.num_points,3); //x,y,yaw
 
 
