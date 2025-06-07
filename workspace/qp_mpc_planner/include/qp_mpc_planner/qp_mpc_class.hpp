@@ -1,14 +1,14 @@
 #ifndef QP_MPC_PLANNER_QP_MPC_CLASS_HPP_
 #define QP_MPC_PLANNER_QP_MPC_CLASS_HPP_
 #pragma once 
-
 #include <iostream>
 #include <Eigen/Dense>
 #include <rclcpp/rclcpp.hpp>
 #include <project_utils/vehicle_class.hpp>
 #include <project_utils/msg/eigen_vector.hpp>
 #include <project_utils/common_utils.hpp>
-
+#include "qp_mpc_planner/planner_utils.hpp"
+#include "qp_mpc_planner/diff_flat_formulation.hpp"
 #include <qp_mpc_planner/get_obs_pose.hpp>
 #include <chrono>
 #include <unsupported/Eigen/Splines>
@@ -44,6 +44,7 @@ class QpMpc: public rclcpp::Node{
         AXXf stack(const AXXf & , const AXXf &, char );
     private:
         int path_num_points = 30;
+        PlannerParam planner_param;
 
 };  
 

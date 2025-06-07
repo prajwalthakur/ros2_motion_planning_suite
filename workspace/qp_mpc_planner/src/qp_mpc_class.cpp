@@ -7,6 +7,10 @@ QpMpc::QpMpc():Node("qp_mpc_planner_node") {
     RCLCPP_INFO_STREAM(this->get_logger(), "Rows = " <<  mat_path_points.rows() << ", Cols = " << mat_path_points.cols());
     Eigen::VectorXd ego_state(5);
     ego_state<<10.0,0.0,0.0,0.0,0.0;
+
+    // initialize the problem formulation of diff flatness base
+    diffflatformulation::init_prob(planner_param);
+    
     find_ref_path( ego_state);
     //find_closest_point(mat_path_points,ego_state);
     RCLCPP_INFO(this->get_logger(),"find_ref_path successfully called");
@@ -44,7 +48,7 @@ AXXf QpMpc::stack(const AXXf & arr1, const AXXf & arr2, char ch){
   }
   else if( ch=='h'){
     AXXf temp(arr1.rows(),arr1.cols()+arr2.cols());
-    RCLCPP_INFO_STREAM(this->get_logger(), arr1.rows()<<" " << arr1.cols()<<" " << arr2.cols());
+    //RCLCPP_INFO_STREAM(this->get_logger(), arr1.rows()<<" " << arr1.cols()<<" " << arr2.cols());
     
     temp.leftCols(arr1.cols()) = arr1;
     temp.rightCols(arr2.cols()) = arr2;
@@ -157,11 +161,14 @@ void QpMpc::find_ref_path( StateVector& ego_state){
 
     size_t obs_len = obs_poses.rows();
 
-    
+
+    diffflatformulation::create_prob(ref_poses, ego_pose,obs_poses,planner_param);
+    diffflatformulation::create_prob(ref_poses, ego_pose,obs_poses,planner_param);
+    diffflatformulation::solve_prob(planner_param);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Qp solved sucessfully?" <<planner_param.qp_fail);
+    diffflatformulation::compute_controls(planner_param);
+    RCLCPP_INFO_STREAM(this->get_logger(), "compute_controls called and successfully implemented");
     //Eigen::ArrayXXf ref_pose(path_def.num_points,3); //x,y,yaw
-
-
-
     // Eigen::Matrix<float,3,1> XYZPhi = path_def.cs_pose(path_def.arc_length);
     // float x_s   = XYZPhi(0);
     // float y_s   = XYZPhi(1);

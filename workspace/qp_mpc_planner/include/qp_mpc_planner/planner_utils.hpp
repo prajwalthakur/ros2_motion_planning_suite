@@ -9,6 +9,7 @@ struct PlannerParam{
     float steer_max;
     float acc_max=2.0, acc_min = -2.0;
     float steer_dot_max;
+    float wheel_base = 2.0;
     float lx_veh = 2.0, ly_veh = 0.5;
     float prox_obs=0.2, prox_agent=0.2;
     int kappa = num_horizon_length; 
@@ -16,7 +17,9 @@ struct PlannerParam{
     Eigen::Array<float,1,-1> x_ego,y_ego;
     Eigen::ArrayXXf x_obs,y_obs,x_obs_filt,y_obs_filt;
 
+    Eigen::ArrayXXf commanded_speed, curvature, steer_angle;
 
+    
     bool mpc, free_space, on_demand;
     int num, num_up, num_ctrl, nvar,  VERBOSE, mpc_step, max_time, num_static_obs, num_veh, qp_fail, id_badge, colliding_step, world;
 
