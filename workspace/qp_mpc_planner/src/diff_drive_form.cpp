@@ -104,14 +104,15 @@ void solve_prob(PlannerParam& planner_param){
     // (b)
     AXXf b_x_ineq = stack(planner_param.x_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.x_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
     AXXf b_y_ineq = stack(planner_param.y_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.y_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+    AXXf b_pos_ineq = stack(b_x_ineq,b_y_ineq,'v');
 
     AXXf b_vx_ineq = stack(planner_param.vel_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.vel_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
     AXXf b_vy_ineq = stack(planner_param.vel_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.vel_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-    
+    AXXf b_vel_ineq = stack(b_vx_ineq,b_vy_ineq,'v');    
     // (c)
     AXXf b_ax_ineq = stack(planner_param.acc_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.acc_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
     AXXf b_ay_ineq = stack(planner_param.acc_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.acc_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        
+    AXXf b_acc_ineq = stack(b_ax_ineq, b_ay_ineq, 'v');
     
     // equality constraints for initial conditions
 
@@ -129,4 +130,42 @@ void solve_prob(PlannerParam& planner_param){
                                 planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.y_ref.matrix(),'v');
 
 
+    AXXf A_slack_ineq, b_slack_ineq;
+    int tries = 0;
+    planner_param.qp_fail = 1;
+    planner_param.weight_lin_slack =  planner_param.weight_lin_slack_og;
+    planner_param.weight_quad_slack = planner_param.weight_quad_slack_og;
+    int n_horizon = planner_param.num_horizon_length;
+    int n_obs = planner_param.num_filt_obs;
+    while(tries<1 && planner_param.qp_fail){
+        Eigen::ArrayXXf temp_cost, temp_lincost;
+        if(planner_param.num_filt_obs !=0){
+            if(tries==0){
+                // create extra param for the axis wise obs-avoidance ineq
+                continous_collision_avoidance(planner_param);
+                planner_param.slack = AXXf::Zero(n_horizon*n_obs,n_horizon*n_obs);
+                planner_param.A_eq = block_diag(planner_param.A_eq,AXXf::Zero(n_horizon*n_obs,n_horizon*n_obs));
+                A_pos_ineq = block_diag(A_pos_ineq,AXXf::Zero(n_horizon*n_obs,n_horizon*n_obs));
+
+
+            }
+        }else{
+            planner_param.A_ineq = stack(stack(A_pos_ineq,A_vel_ineq,'v'),A_acc_ineq,'v');
+            planner_param.b_ineq = stack(stack(b_pos_ineq,b_vel_ineq,'v'), b_acc_ineq,'v');
+            temp_cost =  planner_param.weight_quad_slack*planner_param.cost_goal + planner_param.weight_smoothness*planner_param.cost_smoothness;
+            temp_lincost = planner_param.weight_goal*planner_param.lincost_goal;
+        }
+    }
+
+    // solve qp
+
+    Eigen::QuadProgDense solver_
+
 }
+
+void continous_collision_avoidance(PlannerParam& planner_param){
+
+
+
+}
+

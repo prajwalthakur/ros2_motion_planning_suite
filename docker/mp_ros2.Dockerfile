@@ -55,6 +55,12 @@ RUN \
     pip3 install --no-cache-dir Cython
 
 
+RUN curl -1sLf 'https://dl.cloudsmith.io/public/mc-rtc/stable/setup.deb.sh' | bash
+RUN apt install libeigen-quadprog-dev
+RUN apt install libboost-test-dev
+RUN ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
+
+
 #install jax
 RUN pip3 install  "jax[cuda12]" 
 # Install HPIPM and BLASFEO

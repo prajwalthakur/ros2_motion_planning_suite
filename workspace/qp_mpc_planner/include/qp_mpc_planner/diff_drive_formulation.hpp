@@ -16,5 +16,6 @@ void init_prob(PlannerParam& );
 void create_prob(const Eigen::ArrayXXf& , const Eigen::Array3f& ,const Eigen::ArrayXXf& , PlannerParam& );
 
 void solve_prob(PlannerParam&);
-
+void computeXY(PlannerParam&);
+void continous_collision_avoidance(PlannerParam& );
 #endif

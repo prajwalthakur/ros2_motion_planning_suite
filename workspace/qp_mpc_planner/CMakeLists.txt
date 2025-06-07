@@ -30,6 +30,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
     ament_cmake
     rclcpp
     std_msgs
+    eigen-quadprog
 )
 
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
