@@ -1,15 +1,13 @@
 #include "qp_mpc_planner/diff_flat_formulation.hpp"
 
 namespace diffflatformulation{
-
-    using namespace bernsteinpol;
     void init_prob(PlannerParam& planner_param){
         // Eigen::ArrayXf horizon_length  =  Eigen::ArrayXf(planner_param.num_horizon_length);
         // Eigen::ArrayXf horizon_length_up = Eigen::ArrayXf(planner_param.num_horizon_length_up);
         // horizon_length.setLinSpaced(planner_param.num_horizon_length, 0.0, planner_param.horizon_time);
         // horizon_length_up.setLinSpaced(planner_param.num_horizon_length_up, 0.0, planner_param.horizon_time);
 
-        five_var bern_pol = computeBernstein(planner_param.num_horizon_length,planner_param.horizon_time);
+        bernsteinpol::five_var bern_pol = bernsteinpol::computeBernstein(planner_param.num_horizon_length,planner_param.horizon_time);
         planner_param.nvar = bern_pol.a.cols();
         planner_param.P = bern_pol.a;
         planner_param.Pdot = bern_pol.b;
@@ -17,7 +15,7 @@ namespace diffflatformulation{
         planner_param.Pdddot = bern_pol.d;
         planner_param.Pddddot = bern_pol.e;
 
-        five_var bern_pol_up = computeBernstein(planner_param.num_horizon_length_up,planner_param.horizon_time);
+        bernsteinpol::five_var bern_pol_up = bernsteinpol::computeBernstein(planner_param.num_horizon_length_up,planner_param.horizon_time);
         planner_param.P_up = bern_pol_up.a;
         planner_param.Pdot_up = bern_pol_up.b;
         planner_param.Pddot_up = bern_pol_up.c;
@@ -37,10 +35,10 @@ namespace diffflatformulation{
     // create the relevant data for the neighbouring obstacles
     void neighbouring_obs(PlannerParam& planner_param){
         int N = planner_param.num_horizon_length;
-        planner_param.x_obs_filt = AXXf::Ones(planner_param.x_obs.rows(),N);
-        planner_param.y_obs_filt = AXXf::Ones(planner_param.x_obs.rows(),N);
+        planner_param.x_obs_filt = Eigen::ArrayXXf::Ones(planner_param.x_obs.rows(),N);
+        planner_param.y_obs_filt = Eigen::ArrayXXf::Ones(planner_param.x_obs.rows(),N);
         
-        AXXf val = pow(((-planner_param.x_obs).rowwise() +  planner_param.x_ego)/(2*planner_param.lx_veh + planner_param.prox_obs),2) +\
+        Eigen::ArrayXXf val = pow(((-planner_param.x_obs).rowwise() +  planner_param.x_ego)/(2*planner_param.lx_veh + planner_param.prox_obs),2) +\
                     pow(((-planner_param.y_obs).rowwise() +  planner_param.y_ego)/(2*planner_param.ly_veh + planner_param.prox_obs),2) ;
     
         int k=0;
@@ -54,42 +52,45 @@ namespace diffflatformulation{
         if(k!=0){
             planner_param.x_obs_filt.conservativeResize(k,N);
             planner_param.y_obs_filt.conservativeResize(k,N);
-            planner_param.a_veh = AXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.lx_veh + planner_param.buffer);
-            planner_param.b_veh = AXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.ly_veh + planner_param.buffer);
+            planner_param.a_veh = Eigen::ArrayXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.lx_veh + planner_param.buffer);
+            planner_param.b_veh = Eigen::ArrayXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.ly_veh + planner_param.buffer);
         }else{
             planner_param.x_obs_filt.conservativeResize(k, N);
             planner_param.y_obs_filt.conservativeResize(k, N);
-            planner_param.a_veh = AXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.lx_veh + planner_param.buffer);
-            planner_param.b_veh = AXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.ly_veh + planner_param.buffer);
+            planner_param.a_veh = Eigen::ArrayXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.lx_veh + planner_param.buffer);
+            planner_param.b_veh = Eigen::ArrayXXf::Ones(planner_param.x_obs_filt.rows(),N)*(2*planner_param.ly_veh + planner_param.buffer);
         }
         planner_param.num_filt_obs = k;
     }
-
-    void create_prob(const Eigen::ArrayXXf& ref_poses, const Eigen::Array3Xf& ego_pose,const Eigen::ArrayXXf& obs_poses, PlannerParam& planner_param){
-        int num_obs = obs_poses.rows();
+    //pred_obs_poses num_obsx(3*horizon_length)
+    //pred_ego_pose 3x(horizon_length)
+    //ref_poses 3x(horizon_length)
+    // planner_param PlannerParam class stores paramter and computed values
+    void create_prob(const Eigen::ArrayXXf& ref_poses, const Eigen::Array3Xf& pred_ego_pose,const Eigen::ArrayXXf& pred_obs_poses, PlannerParam& planner_param){
+        int num_obs = pred_obs_poses.rows();
         int num_horizon = planner_param.num_horizon_length;
         planner_param.x_ego.resize(1,num_horizon);
         planner_param.y_ego.resize(1,num_horizon);
         
-        planner_param.x_ego = ego_pose.row(0);
-        planner_param.y_ego = ego_pose.row(1);
+        planner_param.x_ego = pred_ego_pose.row(0);
+        planner_param.y_ego = pred_ego_pose.row(1);
 
-        planner_param.x_init  = ego_pose(0,0);
-        planner_param.y_init  = ego_pose(1,0);
+        planner_param.x_init  = pred_ego_pose(0,0);
+        planner_param.y_init  = pred_ego_pose(1,0);
         planner_param.vx_init = 0.0; //TODO:
         planner_param.vy_init = 0.0; //TODO:
         planner_param.ax_init = 0.0;
         planner_param.ay_init = 0.0;
 
-        planner_param.x_ref = ref_poses.col(0);
-        planner_param.y_ref =  ref_poses.col(1);
+        planner_param.x_ref = ref_poses.row(0);
+        planner_param.y_ref =  ref_poses.row(1);
 
         planner_param.x_obs.resize(num_obs,num_horizon);
         planner_param.y_obs.resize(num_obs,num_horizon);
         for(int i=0;i<num_horizon;++i){
             int co = 3*i;
-            planner_param.x_obs.col(i) =  obs_poses.col(co);
-            planner_param.y_obs.col(i) =  obs_poses.col(co+1);
+            planner_param.x_obs.col(i) =  pred_obs_poses.col(co);
+            planner_param.y_obs.col(i) =  pred_obs_poses.col(co+1);
         }
         neighbouring_obs(planner_param);
     }
@@ -99,28 +100,28 @@ namespace diffflatformulation{
 
         // Inequality constraints
 
-        AXXf A_pos_ineq = block_diag(stack(planner_param.P,-planner_param.P,'v'),stack(planner_param.P,-planner_param.P,'v')); // Ax>=b ==> -Ax<=b
-        AXXf A_vel_ineq = block_diag(stack(planner_param.Pdot,-planner_param.Pdot,'v'),stack(planner_param.Pdot,-planner_param.Pdot,'v')); // Ax>=b ==> -Ax<=b
-        AXXf A_acc_ineq = block_diag(stack(planner_param.Pddot,-planner_param.Pddot,'v'),stack(planner_param.Pddot,-planner_param.Pddot,'v')); // Ax>=b ==> -Ax<=b
+        Eigen::ArrayXXf A_pos_ineq = block_diag(stack(planner_param.P,-planner_param.P,'v'),stack(planner_param.P,-planner_param.P,'v')); // Ax>=b ==> -Ax<=b
+        Eigen::ArrayXXf A_vel_ineq = block_diag(stack(planner_param.Pdot,-planner_param.Pdot,'v'),stack(planner_param.Pdot,-planner_param.Pdot,'v')); // Ax>=b ==> -Ax<=b
+        Eigen::ArrayXXf A_acc_ineq = block_diag(stack(planner_param.Pddot,-planner_param.Pddot,'v'),stack(planner_param.Pddot,-planner_param.Pddot,'v')); // Ax>=b ==> -Ax<=b
 
         // (b)
-        AXXf b_x_ineq = stack(planner_param.x_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.x_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        AXXf b_y_ineq = stack(planner_param.y_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.y_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        AXXf b_pos_ineq = stack(b_x_ineq,b_y_ineq,'v');
+        Eigen::ArrayXXf b_x_ineq = stack(planner_param.x_max*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),planner_param.x_min*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+        Eigen::ArrayXXf b_y_ineq = stack(planner_param.y_max*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),planner_param.y_min*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+        Eigen::ArrayXXf b_pos_ineq = stack(b_x_ineq,b_y_ineq,'v');
 
-        AXXf b_vx_ineq = stack(planner_param.vel_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.vel_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        AXXf b_vy_ineq = stack(planner_param.vel_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.vel_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        AXXf b_vel_ineq = stack(b_vx_ineq,b_vy_ineq,'v');    
+        Eigen::ArrayXXf b_vx_ineq = stack(planner_param.vel_max*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),planner_param.vel_min*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+        Eigen::ArrayXXf b_vy_ineq = stack(planner_param.vel_max*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),planner_param.vel_min*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+        Eigen::ArrayXXf b_vel_ineq = stack(b_vx_ineq,b_vy_ineq,'v');    
         // (c)
-        AXXf b_ax_ineq = stack(planner_param.acc_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.acc_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        AXXf b_ay_ineq = stack(planner_param.acc_max*AXXf::Ones(planner_param.num_horizon_length,1),planner_param.acc_min*AXXf::Ones(planner_param.num_horizon_length,1),'v'); 
-        AXXf b_acc_ineq = stack(b_ax_ineq, b_ay_ineq, 'v');
+        Eigen::ArrayXXf b_ax_ineq = stack(planner_param.acc_max*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),planner_param.acc_min*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+        Eigen::ArrayXXf b_ay_ineq = stack(planner_param.acc_max*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),planner_param.acc_min*Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1),'v'); 
+        Eigen::ArrayXXf b_acc_ineq = stack(b_ax_ineq, b_ay_ineq, 'v');
         
         // equality constraints for initial conditions
 
         planner_param.A_eq = block_diag(stack(stack(planner_param.P.row(0),planner_param.Pdot.row(0),'v'),planner_param.Pddot.row(0),'v'),\
                                         stack(stack(planner_param.P.row(0),planner_param.Pdot.row(0),'v'),planner_param.Pddot.row(0),'v'));
-        planner_param.b_eq = AXXf(6,1); //x,vx,ax,y,vy,ay
+        planner_param.b_eq = Eigen::ArrayXXf(6,1); //x,vx,ax,y,vy,ay
 
         planner_param.b_eq<<planner_param.x_init, planner_param.vx_init, planner_param.ax_init, planner_param.y_init , planner_param.vy_init, planner_param.ay_init;
 
@@ -128,11 +129,11 @@ namespace diffflatformulation{
         // linear part of the quadratic cost ()
         //TODO:
         planner_param.lincost_goal = -1.0f*stack(\
-                                    planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.x_ref.bottomRows(planner_param.kappa).matrix(),\
-                                    planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.y_ref.matrix(),'v');
+                                    planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.x_ref.transpose().bottomRows(planner_param.kappa).matrix(),\
+                                    planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.y_ref.transpose().bottomRows(planner_param.kappa).matrix(),'v');
 
 
-        AXXf A_slack_ineq, b_slack_ineq;
+        Eigen::ArrayXXf A_slack_ineq, b_slack_ineq;
         int tries = 0;
         planner_param.qp_fail = 0;
         planner_param.weight_lin_slack =  planner_param.weight_lin_slack_og;
@@ -145,9 +146,9 @@ namespace diffflatformulation{
                 if(tries==0){
                     // create extra param for the axis wise obs-avoidance ineq
                     continous_collision_avoidance(planner_param);
-                    planner_param.slack = AXXf::Zero(n_horizon*n_obs,n_horizon*n_obs);
-                    planner_param.A_eq = block_diag(planner_param.A_eq,AXXf::Zero(n_horizon*n_obs,n_horizon*n_obs));
-                    A_pos_ineq = block_diag(A_pos_ineq,AXXf::Zero(n_horizon*n_obs,n_horizon*n_obs));
+                    planner_param.slack = Eigen::ArrayXXf::Zero(n_horizon*n_obs,n_horizon*n_obs);
+                    planner_param.A_eq = block_diag(planner_param.A_eq,Eigen::ArrayXXf::Zero(n_horizon*n_obs,n_horizon*n_obs));
+                    A_pos_ineq = block_diag(A_pos_ineq,Eigen::ArrayXXf::Zero(n_horizon*n_obs,n_horizon*n_obs));
 
 
                 }
@@ -168,9 +169,9 @@ namespace diffflatformulation{
                             planner_param.A_ineq.cast<double>().matrix(), planner_param.b_ineq.cast<double>().matrix());
 
         Eigen::ArrayXXf sol = solver_xy.result().cast<float>();
-        AXXf sol_xy  = sol.topRows(2*planner_param.nvar);
-        AXXf sol_x = sol_xy.topRows(planner_param.nvar);
-        AXXf sol_y = sol_xy.bottomRows(planner_param.nvar);
+        Eigen::ArrayXXf sol_xy  = sol.topRows(2*planner_param.nvar);
+        Eigen::ArrayXXf sol_x = sol_xy.topRows(planner_param.nvar);
+        Eigen::ArrayXXf sol_y = sol_xy.bottomRows(planner_param.nvar);
 
         if(planner_param.num_filt_obs!=0){
 
@@ -210,7 +211,7 @@ namespace diffflatformulation{
         if(planner_param.qp_fail)
         {   
             // if planner fails to compute solution
-            planner_param.x =   stack(planner_param.x.bottomRows(planner_param.x.rows()-1) ,planner_param.x.bottomRows(1), 'v');
+            planner_param.x =    stack(planner_param.x.bottomRows(planner_param.x.rows()-1) ,planner_param.x.bottomRows(1), 'v');
             planner_param.y =    stack(planner_param.y.bottomRows(planner_param.y.rows()-1) ,planner_param.y.bottomRows(1), 'v');
             planner_param.xdot = stack(planner_param.y.bottomRows(planner_param.xdot.rows()-1) ,planner_param.xdot.bottomRows(1), 'v');
             planner_param.ydot = stack(planner_param.ydot.bottomRows(planner_param.ydot.rows()-1) ,planner_param.ydot.bottomRows(1), 'v');
@@ -235,8 +236,51 @@ namespace diffflatformulation{
 
         Eigen::ArrayXXf steer_angle     = planner_param.wheel_base*curvature.atan() ; 
 
+        Eigen::ArrayXf commanded_yaw  =  planner_param.ydot.binaryExpr(planner_param.xdot, [](float y, float x) {
+                                return std::atan2(y, x);
+                            });
+
+        for(size_t i=1;i<commanded_yaw.rows()-1;++i){
+            float delta = commanded_yaw(i) - commanded_yaw(i-1);
+            if(delta > M_PI){commanded_yaw(i) -= 2.0f*M_PI; }
+            else if(delta < -M_PI){ commanded_yaw(i) += 2.0f*M_PI; }
+        }
+
         planner_param.commanded_speed = commanded_speed;
-        planner_param.curvature = curvature;
-        planner_param.steer_angle  = steer_angle;
+        planner_param.commanded_curvature = curvature;
+        planner_param.commanded_steer_angle  = steer_angle;
+        planner_param.commanded_yaw = commanded_yaw;
+    }
+
+
+
+    Eigen::ArrayXXf stack(const Eigen::ArrayXXf & arr1, const Eigen::ArrayXXf & arr2, char ch){
+        // vertical stack
+        if (ch=='v') {
+        Eigen::ArrayXXf temp(arr1.rows()+arr2.rows(),arr1.cols());
+        temp.topRows(arr1.rows()) =  arr1;
+        temp.bottomRows(arr2.rows()) = arr2;
+        return temp;
+        }
+        else if( ch=='h'){
+        Eigen::ArrayXXf temp(arr1.rows(),arr1.cols()+arr2.cols());
+        //RCLCPP_INFO_STREAM(this->get_logger(), arr1.rows()<<" " << arr1.cols()<<" " << arr2.cols());
+
+        temp.leftCols(arr1.cols()) = arr1;
+        temp.rightCols(arr2.cols()) = arr2;
+        return temp;
+        }
+        else{
+        return Eigen::ArrayXXf();
+        }
+
+    }
+
+    Eigen::ArrayXXf block_diag( const Eigen::ArrayXXf & arr1, const Eigen::ArrayXXf & arr2){
+        Eigen::ArrayXXf temp(arr1.rows()+arr2.rows(),arr1.cols()+arr2.cols());
+        temp = 0.0;
+        temp.topRows(arr1.rows()).leftCols(arr1.cols())= arr1;
+        temp.bottomRows(arr2.rows()).rightCols(arr2.cols()) = arr2;
+        return temp;
     }
 }

@@ -10,7 +10,7 @@ QpMpc::QpMpc():Node("qp_mpc_planner_node") {
 
     // initialize the problem formulation of diff flatness base
     diffflatformulation::init_prob(planner_param);
-    
+
     find_ref_path( ego_state);
     //find_closest_point(mat_path_points,ego_state);
     RCLCPP_INFO(this->get_logger(),"find_ref_path successfully called");
@@ -39,24 +39,24 @@ Eigen::Index QpMpc::find_closest_point(MapArrayXfRow& path_array, Eigen::Array3f
 
 
 AXXf QpMpc::stack(const AXXf & arr1, const AXXf & arr2, char ch){
-  // vertical stack
-  if (ch=='v') {
+    // vertical stack
+    if (ch=='v') {
     AXXf temp(arr1.rows()+arr2.rows(),arr1.cols());
     temp.topRows(arr1.rows()) =  arr1;
     temp.bottomRows(arr2.rows()) = arr2;
     return temp;
-  }
-  else if( ch=='h'){
+    }
+    else if( ch=='h'){
     AXXf temp(arr1.rows(),arr1.cols()+arr2.cols());
     //RCLCPP_INFO_STREAM(this->get_logger(), arr1.rows()<<" " << arr1.cols()<<" " << arr2.cols());
-    
+
     temp.leftCols(arr1.cols()) = arr1;
     temp.rightCols(arr2.cols()) = arr2;
     return temp;
-  }
-  else{
+    }
+    else{
     return AXXf();
-  }
+    }
 
 }
 
@@ -68,7 +68,7 @@ PathDef QpMpc::ref_wp_spline(const  Eigen::ArrayXXf& ref_wp){
     Eigen::ArrayXf dx = X_diff.col(0); // size (N-1)
     Eigen::ArrayXf dy = X_diff.col(1); // size (N-1)
     phi = dy.binaryExpr(dx, [](float y, float x) {
-      return std::atan2(y, x);
+        return std::atan2(y, x);
     });
     for(size_t i=1;i<N-1;++i){
         float delta = phi(i) - phi(i-1);
@@ -99,7 +99,7 @@ PathDef QpMpc::ref_wp_spline(const  Eigen::ArrayXXf& ref_wp){
         X_row_pose,
         spline_degree,
         arc_vec );
-    
+
     Eigen::ArrayXXf interep_poses(N,3);
     for(size_t i =0 ; i< N;++i){
         float s = arc_vec(i);
@@ -145,10 +145,16 @@ void QpMpc::ref_wp_section(int idx_int, int path_num_points, const Eigen::ArrayX
 }
 
 
+
+//pred_obs_poses num_obsx(3*horizon_length)
+//pred_ego_pose 3x(horizon_length)
+//ref_poses 3x(horizon_length)
+// planner_param PlannerParam class stores paramter and computed values
+
 void QpMpc::find_ref_path( StateVector& ego_state){
-    Eigen::Array3f ego_pose;
-    ego_pose<<ego_state(0),ego_state(1),ego_state(2);
-    Eigen::Index idx = find_closest_point(mat_path_points, ego_pose);
+    Eigen::Array3f current_ego_pose;
+    current_ego_pose<<ego_state(0),ego_state(1),ego_state(2);
+    Eigen::Index idx = find_closest_point(mat_path_points, current_ego_pose);
     int idx_int  = static_cast<int>(idx);
     int total_rows = static_cast<int>(mat_path_points.rows());
     int n = std::min(total_rows,path_num_points);
@@ -156,14 +162,16 @@ void QpMpc::find_ref_path( StateVector& ego_state){
     Eigen::ArrayXXf ref_wp(n, 2);
     ref_wp_section(idx_int, path_num_points, mat_path_points,ref_wp);
     PathDef path_def =   ref_wp_spline(ref_wp);
-    Eigen::ArrayXXf obs_poses = extract_near_by_obs(ego_pose,m_dist_threshold);
-    RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<obs_poses);
 
-    size_t obs_len = obs_poses.rows();
+    // get the obs_prediction
+    Eigen::ArrayXXf pred_obs_poses = extract_near_by_obs(current_ego_pose,m_dist_threshold,planner_param.num_horizon_length);
+    RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<pred_obs_poses.row(0));
+    size_t obs_len = pred_obs_poses.rows();
+    Eigen::ArrayXXf predicted_ego_poses(3,planner_param.num_horizon_length); 
+    get_ego_poses_prediction(predicted_ego_poses, current_ego_pose, planner_param); // get the prediction of the ego pose
 
 
-    diffflatformulation::create_prob(ref_poses, ego_pose,obs_poses,planner_param);
-    diffflatformulation::create_prob(ref_poses, ego_pose,obs_poses,planner_param);
+    diffflatformulation::create_prob(path_def.ref_poses.transpose(), predicted_ego_poses,pred_obs_poses,planner_param);
     diffflatformulation::solve_prob(planner_param);
     RCLCPP_INFO_STREAM(this->get_logger(), "Qp solved sucessfully?" <<planner_param.qp_fail);
     diffflatformulation::compute_controls(planner_param);
@@ -176,4 +184,15 @@ void QpMpc::find_ref_path( StateVector& ego_state){
     // float arc_length = path_def.arc_length;
     // RCLCPP_INFO_STREAM(this->get_logger(), "poses" <<path_def.ref_poses << "x_s = " <<  x_s << ", y_s = " << y_s<< "phi_s "<< phi_s<< "arc-length"<<arc_length);
 
+}
+void QpMpc::get_ego_poses_prediction(Eigen::ArrayXXf& predicted_ego_poses, Eigen::Array3f& current_ego_pose, PlannerParam& planner_param){
+
+    Eigen::ArrayXXf prev_pred_ego_poses = stack(stack(planner_param.x,planner_param.y,'h'),planner_param.commanded_yaw,'h').transpose();
+    predicted_ego_poses = stack(current_ego_pose,prev_pred_ego_poses,'h');
+    int N = predicted_ego_poses.cols();
+    for(size_t i=1;i<N-1;++i){
+        float delta = predicted_ego_poses(2,i) - predicted_ego_poses(2,i-1);
+        if(delta > M_PI){predicted_ego_poses(2,i) -= 2.0f*M_PI; }
+        else if(delta < -M_PI){ predicted_ego_poses(2,i) += 2.0f*M_PI; }
+    }
 }

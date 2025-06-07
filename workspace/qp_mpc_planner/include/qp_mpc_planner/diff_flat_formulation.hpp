@@ -22,5 +22,8 @@ namespace diffflatformulation{
     void computeXY(PlannerParam&);
     void continous_collision_avoidance(PlannerParam& );
     void compute_controls(PlannerParam&);
+    Eigen::ArrayXXf stack(const Eigen::ArrayXXf & arr1, const Eigen::ArrayXXf & arr2, char ch);
+    Eigen::ArrayXXf block_diag(const Eigen::ArrayXXf & arr1, const Eigen::ArrayXXf & arr2);
+
 }
 #endif

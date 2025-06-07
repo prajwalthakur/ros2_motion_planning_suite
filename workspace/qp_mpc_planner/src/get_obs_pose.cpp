@@ -1,5 +1,5 @@
 #include "qp_mpc_planner/get_obs_pose.hpp"
-Eigen::ArrayXXf extract_near_by_obs(Eigen::Array3f& ego_pose, float dist_threshold) {
+Eigen::ArrayXXf extract_near_by_obs(Eigen::Array3f& ego_pose, float dist_threshold, float horizon_length) {
     // get the dist to ego 
     Eigen::ArrayXXf obs_pose  = {{2.0,2.0,0.2},
                                 {10.0,0.0,0.0},
@@ -29,10 +29,12 @@ Eigen::ArrayXXf extract_near_by_obs(Eigen::Array3f& ego_pose, float dist_thresho
     
     // copy into an ArrayXXf (N×3) result
     Eigen::ArrayXXf filtered_obs(filt_obs.size(), 3);
-    for (int i = 0; i < static_cast<int>(filt_obs.size()); ++i) {
+    int num_obs = static_cast<int>(filt_obs.size());
+    for (int i = 0; i < num_obs; ++i) {
         filtered_obs(i, 0) = filt_obs[i][0];
         filtered_obs(i, 1) = filt_obs[i][1];
         filtered_obs(i, 2) = filt_obs[i][2];
     }
-    return filtered_obs;
+    Eigen::ArrayXXf pred_filtered_obs_traj = filtered_obs.replicate(1, static_cast<int>(horizon_length));
+    return pred_filtered_obs_traj;
 }

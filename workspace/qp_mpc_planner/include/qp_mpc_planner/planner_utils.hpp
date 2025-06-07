@@ -17,7 +17,7 @@ struct PlannerParam{
     Eigen::Array<float,1,-1> x_ego,y_ego;
     Eigen::ArrayXXf x_obs,y_obs,x_obs_filt,y_obs_filt;
 
-    Eigen::ArrayXXf commanded_speed, curvature, steer_angle;
+    Eigen::ArrayXXf commanded_speed, commanded_curvature, commanded_steer_angle,commanded_yaw;
 
     
     bool mpc, free_space, on_demand;

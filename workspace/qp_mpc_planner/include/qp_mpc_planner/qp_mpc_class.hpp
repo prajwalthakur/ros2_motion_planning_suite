@@ -42,6 +42,7 @@ class QpMpc: public rclcpp::Node{
         void find_ref_path( StateVector& );
         PathDef ref_wp_spline(const Eigen::ArrayXXf&);
         AXXf stack(const AXXf & , const AXXf &, char );
+        void get_ego_poses_prediction(Eigen::ArrayXXf&, Eigen::Array3f&, PlannerParam&);
     private:
         int path_num_points = 30;
         PlannerParam planner_param;

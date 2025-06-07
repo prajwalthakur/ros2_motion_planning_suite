@@ -25,5 +25,5 @@
  *   Each row of the result corresponds to [x, y, θ] of one nearby obstacle. If no 
  *   obstacles lie within the threshold, an empty (0×3) array is returned.
  */
-Eigen::ArrayXXf extract_near_by_obs(Eigen::Array3f& , float );
+Eigen::ArrayXXf extract_near_by_obs(Eigen::Array3f& , float, float );
 #endif
