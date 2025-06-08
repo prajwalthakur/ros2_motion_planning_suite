@@ -75,12 +75,7 @@ namespace diffflatformulation{
         planner_param.x_ego = pred_ego_pose.row(0);
         planner_param.y_ego = pred_ego_pose.row(1);
 
-        planner_param.x_init  = pred_ego_pose(0,0);
-        planner_param.y_init  = pred_ego_pose(1,0);
-        planner_param.vx_init = 0.0; //TODO:
-        planner_param.vy_init = 0.0; //TODO:
-        planner_param.ax_init = 0.0;
-        planner_param.ay_init = 0.0;
+
 
         planner_param.x_ref = ref_poses.row(0);
         planner_param.y_ref =  ref_poses.row(1);
@@ -127,7 +122,6 @@ namespace diffflatformulation{
 
 
         // linear part of the quadratic cost ()
-        //TODO:
         planner_param.lincost_goal = -1.0f*stack(\
                                     planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.x_ref.transpose().bottomRows(planner_param.kappa).matrix(),\
                                     planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.y_ref.transpose().bottomRows(planner_param.kappa).matrix(),'v');
@@ -144,6 +138,7 @@ namespace diffflatformulation{
             Eigen::ArrayXXf temp_cost, temp_lincost;
             if(planner_param.num_filt_obs !=0){
                 if(tries==0){
+                    //TODO:
                     // create extra param for the axis wise obs-avoidance ineq
                     continous_collision_avoidance(planner_param);
                     planner_param.slack = Eigen::ArrayXXf::Zero(n_horizon*n_obs,n_horizon*n_obs);

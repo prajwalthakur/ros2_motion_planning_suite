@@ -1,22 +1,31 @@
 #include "qp_mpc_planner/qp_mpc_class.hpp"
-QpMpc::QpMpc():Node("qp_mpc_planner_node") {
+QpMpc::QpMpc():Node("qp_mpc_planner_node"),
+             m_linear_acceleration_accumulator(10){
     RCLCPP_INFO(this->get_logger(),"qp mpc node started");
+    clock = this->get_clock();
+    rclcpp::Time start = clock->now();
+    init(start);
+
+}
+void QpMpc::init(rclcpp::Time & time){
+    resetAccumulators();
+    m_timestamp = time;
     std::string map_path = "/root/workspace/src/project_utils/maps/e7_floor5_square.csv";
     load_map(map_path,path_data_points,mat_path_points);
     RCLCPP_INFO(this->get_logger(),"load map successfully called");
     RCLCPP_INFO_STREAM(this->get_logger(), "Rows = " <<  mat_path_points.rows() << ", Cols = " << mat_path_points.cols());
-    Eigen::VectorXd ego_state(5);
-    ego_state<<10.0,0.0,0.0,0.0,0.0;
-
     // initialize the problem formulation of diff flatness base
     diffflatformulation::init_prob(planner_param);
-
-    find_ref_path( ego_state);
+    Eigen::VectorXd ego_state(5);
+    ego_state<<10.0,0.0,0.0,0.0,0.0;
+    find_ref_trajectory( ego_state);
     //find_closest_point(mat_path_points,ego_state);
     RCLCPP_INFO(this->get_logger(),"find_ref_path successfully called");
-
-
 }
+
+
+
+
 
 Eigen::Index QpMpc::find_closest_point(MapArrayXfRow& path_array, Eigen::Array3f& ego_state){
     
@@ -125,16 +134,16 @@ PathDef QpMpc::ref_wp_spline(const  Eigen::ArrayXXf& ref_wp){
  * extends beyond the end of the path, it wraps around to the beginning.
  *
  * @param idx_int          Index of the closest waypoint on the reference path.
- * @param path_num_points  Number of waypoints to extract starting from idx_int.
+ * @param m_path_num_points  Number of waypoints to extract starting from idx_int.
  * @param mat_path_points  Full list of reference waypoints (Nx2 array).
- * @param ref_wp           Output array to store the extracted segment of waypoints (path_num_points x 2).
+ * @param ref_wp           Output array to store the extracted segment of waypoints (m_path_num_points x 2).
  */
-void QpMpc::ref_wp_section(int idx_int, int path_num_points, const Eigen::ArrayXXf & mat_path_points, Eigen::ArrayXXf& ref_wp) {
+void QpMpc::ref_wp_section(int idx_int, int m_path_num_points, const Eigen::ArrayXXf & mat_path_points, Eigen::ArrayXXf& ref_wp) {
     int total_rows = static_cast<int>(mat_path_points.rows());
-    int n = std::min(total_rows, path_num_points); 
+    int n = std::min(total_rows, m_path_num_points); 
     if (n + idx_int <= total_rows) {
         // Extract a continuous block if it fits within bounds
-        ref_wp = mat_path_points.block(idx_int, 0, path_num_points, 2);
+        ref_wp = mat_path_points.block(idx_int, 0, m_path_num_points, 2);
     } else {
         // Wrap around: extract from idx_int to end, then from start
         int n1 = total_rows - idx_int;
@@ -145,29 +154,62 @@ void QpMpc::ref_wp_section(int idx_int, int path_num_points, const Eigen::ArrayX
 }
 
 
+void QpMpc::get_ego_poses_prediction(Eigen::ArrayXXf& predicted_ego_poses, Eigen::Array3f& current_ego_pose, PlannerParam& planner_param){
+
+    Eigen::ArrayXXf prev_pred_ego_poses = stack(stack(planner_param.x,planner_param.y,'h'),planner_param.commanded_yaw,'h').transpose();
+    predicted_ego_poses = stack(current_ego_pose,prev_pred_ego_poses,'h');
+    size_t N = predicted_ego_poses.cols();
+    for(size_t i=1;i<N-1;++i){
+        float delta = predicted_ego_poses(2,i) - predicted_ego_poses(2,i-1);
+        if(delta > M_PI){predicted_ego_poses(2,i) -= 2.0f*M_PI; }
+        else if(delta < -M_PI){ predicted_ego_poses(2,i) += 2.0f*M_PI; }
+    }
+}
 
 //pred_obs_poses num_obsx(3*horizon_length)
 //pred_ego_pose 3x(horizon_length)
 //ref_poses 3x(horizon_length)
-// planner_param PlannerParam class stores paramter and computed values
+// planner_param PlannerParam class stores paramter and computed values 
+void QpMpc::find_ref_trajectory( StateVector& ego_state){
 
-void QpMpc::find_ref_path( StateVector& ego_state){
+    rclcpp::Time end = clock->now();
+    rclcpp::Duration elapsed = end - m_timestamp;
+    float time_elaspsed = elapsed.seconds();
+    if(time_elaspsed<0.001){return;}
+
+    RCLCPP_INFO(this->get_logger(), "Elapsed time: %f", elapsed.seconds());
+
     Eigen::Array3f current_ego_pose;
     current_ego_pose<<ego_state(0),ego_state(1),ego_state(2);
+    float current_ego_speed = ego_state(3);
+    float current_yaw = ego_state(2);
+    float acc_est  = (current_ego_speed - m_previous_ego_speed)/time_elaspsed;
+    m_linear_acceleration_accumulator.accumulate(acc_est);
+    float current_acc_mean = m_linear_acceleration_accumulator.getRollingMean();
+    m_previous_ego_speed = current_ego_speed;
+    m_timestamp = end;
+    planner_param.x_init  =  current_ego_pose(0);
+    planner_param.y_init  =  current_ego_pose(1);
+    planner_param.vx_init =  current_ego_speed*std::cos(current_yaw); 
+    planner_param.vy_init =  current_ego_speed*std::sin(current_yaw); 
+    planner_param.ax_init =  current_acc_mean*std::cos(current_yaw);
+    planner_param.ay_init =  current_acc_mean*std::sin(current_yaw);
+
+   
     Eigen::Index idx = find_closest_point(mat_path_points, current_ego_pose);
     int idx_int  = static_cast<int>(idx);
     int total_rows = static_cast<int>(mat_path_points.rows());
-    int n = std::min(total_rows,path_num_points);
+    int n = std::min(total_rows,m_path_num_points);
     // Prepare an output array of size (n × 2)
     Eigen::ArrayXXf ref_wp(n, 2);
-    ref_wp_section(idx_int, path_num_points, mat_path_points,ref_wp);
+    ref_wp_section(idx_int, m_path_num_points, mat_path_points,ref_wp);
     PathDef path_def =   ref_wp_spline(ref_wp);
 
     // get the obs_prediction
     Eigen::ArrayXXf pred_obs_poses = extract_near_by_obs(current_ego_pose,m_dist_threshold,planner_param.num_horizon_length);
     RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<pred_obs_poses.row(0));
-    size_t obs_len = pred_obs_poses.rows();
-    Eigen::ArrayXXf predicted_ego_poses(3,planner_param.num_horizon_length); 
+    //size_t obs_len = pred_obs_poses.rows();
+    Eigen::ArrayXXf predicted_ego_poses(3,static_cast<int>(planner_param.num_horizon_length)); 
     get_ego_poses_prediction(predicted_ego_poses, current_ego_pose, planner_param); // get the prediction of the ego pose
 
 
@@ -185,14 +227,9 @@ void QpMpc::find_ref_path( StateVector& ego_state){
     // RCLCPP_INFO_STREAM(this->get_logger(), "poses" <<path_def.ref_poses << "x_s = " <<  x_s << ", y_s = " << y_s<< "phi_s "<< phi_s<< "arc-length"<<arc_length);
 
 }
-void QpMpc::get_ego_poses_prediction(Eigen::ArrayXXf& predicted_ego_poses, Eigen::Array3f& current_ego_pose, PlannerParam& planner_param){
 
-    Eigen::ArrayXXf prev_pred_ego_poses = stack(stack(planner_param.x,planner_param.y,'h'),planner_param.commanded_yaw,'h').transpose();
-    predicted_ego_poses = stack(current_ego_pose,prev_pred_ego_poses,'h');
-    int N = predicted_ego_poses.cols();
-    for(size_t i=1;i<N-1;++i){
-        float delta = predicted_ego_poses(2,i) - predicted_ego_poses(2,i-1);
-        if(delta > M_PI){predicted_ego_poses(2,i) -= 2.0f*M_PI; }
-        else if(delta < -M_PI){ predicted_ego_poses(2,i) += 2.0f*M_PI; }
+
+    void QpMpc::resetAccumulators()
+    {   // Estimate speed and acceleration using a rolling mean
+        m_linear_acceleration_accumulator = RollingMeanAccumulator(static_cast<size_t>(m_velocity_rolling_window_size));
     }
-}

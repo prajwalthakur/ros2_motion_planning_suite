@@ -12,6 +12,7 @@
 #include <qp_mpc_planner/get_obs_pose.hpp>
 #include <chrono>
 #include <unsupported/Eigen/Splines>
+#include <rcppmath/rolling_mean_accumulator.hpp>
 struct PathDef{
     Eigen::Spline<float, 3> cs_pose;
     float arc_length;
@@ -39,13 +40,22 @@ class QpMpc: public rclcpp::Node{
     public:
         void ref_wp_section(int , int, const Eigen::ArrayXXf & ,Eigen::ArrayXXf& );
         Eigen::Index find_closest_point(MapArrayXfRow& ,Eigen::Array3f&);
-        void find_ref_path( StateVector& );
+        void find_ref_trajectory( StateVector& );
         PathDef ref_wp_spline(const Eigen::ArrayXXf&);
         AXXf stack(const AXXf & , const AXXf &, char );
         void get_ego_poses_prediction(Eigen::ArrayXXf&, Eigen::Array3f&, PlannerParam&);
+        void resetAccumulators();
+        void init(rclcpp::Time &);
     private:
-        int path_num_points = 30;
+        using RollingMeanAccumulator = rcppmath::RollingMeanAccumulator<double>;
+        int m_path_num_points = 30;
+        int m_velocity_rolling_window_size = 10;
+        rclcpp::Time m_timestamp;
+        rclcpp::Clock::SharedPtr clock;
+        float m_previous_ego_speed;
+        RollingMeanAccumulator m_linear_acceleration_accumulator;
         PlannerParam planner_param;
+
 
 };  
 
