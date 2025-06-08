@@ -215,8 +215,9 @@ void QpMpc::find_ref_trajectory( StateVector& ego_state){
 
     diffflatformulation::create_prob(path_def.ref_poses.transpose(), predicted_ego_poses,pred_obs_poses,planner_param);
     diffflatformulation::solve_prob(planner_param);
-    RCLCPP_INFO_STREAM(this->get_logger(), "Qp solved sucessfully?" <<planner_param.qp_fail);
     diffflatformulation::compute_controls(planner_param);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Qp solved sucessfully?" <<planner_param.qp_fail);
+
     RCLCPP_INFO_STREAM(this->get_logger(), "compute_controls called and successfully implemented");
     //Eigen::ArrayXXf ref_pose(path_def.num_points,3); //x,y,yaw
     // Eigen::Matrix<float,3,1> XYZPhi = path_def.cs_pose(path_def.arc_length);

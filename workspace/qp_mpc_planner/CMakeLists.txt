@@ -44,6 +44,9 @@ endforeach()
 add_library(qp_mpc_class
   src/qp_mpc_class.cpp
   src/get_obs_pose.cpp
+  src/diff_flat_formulation.cpp
+  src/bernstein_pol.cpp
+  src/get_obs_pose.cpp
 )
 target_include_directories(qp_mpc_class PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

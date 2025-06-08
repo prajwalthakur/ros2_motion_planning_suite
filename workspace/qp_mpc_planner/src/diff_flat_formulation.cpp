@@ -198,7 +198,7 @@ namespace diffflatformulation{
     }
 
     void continous_collision_avoidance(PlannerParam& planner_param){
-
+        
 
     }
 
@@ -235,7 +235,7 @@ namespace diffflatformulation{
                                 return std::atan2(y, x);
                             });
 
-        for(size_t i=1;i<commanded_yaw.rows()-1;++i){
+        for(long int i=1;i<commanded_yaw.rows()-1;++i){
             float delta = commanded_yaw(i) - commanded_yaw(i-1);
             if(delta > M_PI){commanded_yaw(i) -= 2.0f*M_PI; }
             else if(delta < -M_PI){ commanded_yaw(i) += 2.0f*M_PI; }
