@@ -2,6 +2,7 @@
 #define QP_MPC_PLANNER_UTILS__HPP_
 #pragma once
 struct PlannerParam{
+    float dummy_var;
     float num_horizon_length = 30.0;
     float num_horizon_length_up = 300.0;
     float horizon_time = 10.0;

@@ -15,10 +15,9 @@
 //obs_poses : num_obs*(3*horizon_length) , 3 reperesents (x,y,yaw) prediction along the horizon
 namespace diffflatformulation{
 
-    void init_prob(PlannerParam& );
-    void create_prob(const Eigen::ArrayXXf& , const Eigen::Array3f& ,const Eigen::ArrayXXf& , PlannerParam& );
-
-    void solve_prob(PlannerParam&);
+    void init_prob(PlannerParam&,const rclcpp::Logger& );
+    void create_prob(const Eigen::ArrayXXf& , const Eigen::Array3Xf& ,const Eigen::ArrayXXf& , PlannerParam&, const rclcpp::Logger& );
+    void solve_prob(PlannerParam&,const rclcpp::Logger& );
     void computeXY(PlannerParam&);
     void continous_collision_avoidance(PlannerParam& );
     void compute_controls(PlannerParam&);

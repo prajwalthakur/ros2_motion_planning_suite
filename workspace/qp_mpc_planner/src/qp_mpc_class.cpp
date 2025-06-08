@@ -15,9 +15,13 @@ void QpMpc::init(rclcpp::Time & time){
     RCLCPP_INFO(this->get_logger(),"load map successfully called");
     RCLCPP_INFO_STREAM(this->get_logger(), "Rows = " <<  mat_path_points.rows() << ", Cols = " << mat_path_points.cols());
     // initialize the problem formulation of diff flatness base
-    diffflatformulation::init_prob(planner_param);
+    diffflatformulation::init_prob(planner_param,get_logger());
     Eigen::VectorXd ego_state(5);
     ego_state<<10.0,0.0,0.0,0.0,0.0;
+    planner_param.x = Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1)*ego_state(0);
+    planner_param.y = Eigen::ArrayXXf::Ones(planner_param.num_horizon_length,1)*ego_state(1);
+    planner_param.commanded_yaw = Eigen::ArrayXXf::Zero(planner_param.num_horizon_length,1);
+    //RCLCPP_INFO_STREAM(this->get_logger(), planner_param.x.rows()<<planner_param.x.cols()<<planner_param.y.rows()<<planner_param.y.cols());
     find_ref_trajectory( ego_state);
     //find_closest_point(mat_path_points,ego_state);
     RCLCPP_INFO(this->get_logger(),"find_ref_path successfully called");
@@ -156,7 +160,10 @@ void QpMpc::ref_wp_section(int idx_int, int m_path_num_points, const Eigen::Arra
 
 void QpMpc::get_ego_poses_prediction(Eigen::ArrayXXf& predicted_ego_poses, Eigen::Array3f& current_ego_pose, PlannerParam& planner_param){
 
+    //RCLCPP_INFO_STREAM(this->get_logger(), "in get_ego_poses_prediction"<< planner_param.x.rows()<<planner_param.x.cols()<<planner_param.y.rows()<<planner_param.y.cols());
     Eigen::ArrayXXf prev_pred_ego_poses = stack(stack(planner_param.x,planner_param.y,'h'),planner_param.commanded_yaw,'h').transpose();
+    //RCLCPP_INFO_STREAM(this->get_logger(), "get_ego_poses_prediction");
+
     predicted_ego_poses = stack(current_ego_pose,prev_pred_ego_poses,'h');
     size_t N = predicted_ego_poses.cols();
     for(size_t i=1;i<N-1;++i){
@@ -171,7 +178,7 @@ void QpMpc::get_ego_poses_prediction(Eigen::ArrayXXf& predicted_ego_poses, Eigen
 //ref_poses 3x(horizon_length)
 // planner_param PlannerParam class stores paramter and computed values 
 void QpMpc::find_ref_trajectory( StateVector& ego_state){
-
+    RCLCPP_INFO(this->get_logger(), "in find_ref_traj" );
     rclcpp::Time end = clock->now();
     rclcpp::Duration elapsed = end - m_timestamp;
     float time_elaspsed = elapsed.seconds();
@@ -207,15 +214,14 @@ void QpMpc::find_ref_trajectory( StateVector& ego_state){
 
     // get the obs_prediction
     Eigen::ArrayXXf pred_obs_poses = extract_near_by_obs(current_ego_pose,m_dist_threshold,planner_param.num_horizon_length);
-    RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<pred_obs_poses.row(0));
+    // RCLCPP_INFO_STREAM(this->get_logger(), "obs-poses" <<pred_obs_poses.row(0));
     //size_t obs_len = pred_obs_poses.rows();
     Eigen::ArrayXXf predicted_ego_poses(3,static_cast<int>(planner_param.num_horizon_length)); 
     get_ego_poses_prediction(predicted_ego_poses, current_ego_pose, planner_param); // get the prediction of the ego pose
-
-
-    diffflatformulation::create_prob(path_def.ref_poses.transpose(), predicted_ego_poses,pred_obs_poses,planner_param);
-    diffflatformulation::solve_prob(planner_param);
-    diffflatformulation::compute_controls(planner_param);
+    RCLCPP_INFO_STREAM(this->get_logger(), "after get_ego_poses_prediction"<<predicted_ego_poses.rows()<<" "<< predicted_ego_poses.cols());
+    diffflatformulation::create_prob(path_def.ref_poses.transpose(), predicted_ego_poses,pred_obs_poses,planner_param, get_logger());
+    // diffflatformulation::solve_prob(planner_param);
+    // diffflatformulation::compute_controls(planner_param);
     RCLCPP_INFO_STREAM(this->get_logger(), "Qp solved sucessfully?" <<planner_param.qp_fail);
 
     RCLCPP_INFO_STREAM(this->get_logger(), "compute_controls called and successfully implemented");

@@ -1,13 +1,16 @@
 #include "qp_mpc_planner/diff_flat_formulation.hpp"
 
 namespace diffflatformulation{
-    void init_prob(PlannerParam& planner_param){
+    void init_prob(PlannerParam& planner_param, const rclcpp::Logger& logger){
         // Eigen::ArrayXf horizon_length  =  Eigen::ArrayXf(planner_param.num_horizon_length);
         // Eigen::ArrayXf horizon_length_up = Eigen::ArrayXf(planner_param.num_horizon_length_up);
         // horizon_length.setLinSpaced(planner_param.num_horizon_length, 0.0, planner_param.horizon_time);
         // horizon_length_up.setLinSpaced(planner_param.num_horizon_length_up, 0.0, planner_param.horizon_time);
+        RCLCPP_INFO_STREAM(logger, "here1");
 
-        bernsteinpol::five_var bern_pol = bernsteinpol::computeBernstein(planner_param.num_horizon_length,planner_param.horizon_time);
+        bernsteinpol::five_var bern_pol = bernsteinpol::computeBernstein(planner_param.num_horizon_length,planner_param.horizon_time,logger);
+        RCLCPP_INFO_STREAM(logger, "here2");
+
         planner_param.nvar = bern_pol.a.cols();
         planner_param.P = bern_pol.a;
         planner_param.Pdot = bern_pol.b;
@@ -15,7 +18,7 @@ namespace diffflatformulation{
         planner_param.Pdddot = bern_pol.d;
         planner_param.Pddddot = bern_pol.e;
 
-        bernsteinpol::five_var bern_pol_up = bernsteinpol::computeBernstein(planner_param.num_horizon_length_up,planner_param.horizon_time);
+        bernsteinpol::five_var bern_pol_up = bernsteinpol::computeBernstein(planner_param.num_horizon_length_up,planner_param.horizon_time,logger);
         planner_param.P_up = bern_pol_up.a;
         planner_param.Pdot_up = bern_pol_up.b;
         planner_param.Pddot_up = bern_pol_up.c;
@@ -23,7 +26,7 @@ namespace diffflatformulation{
         planner_param.Pddddot_up = bern_pol_up.e;
 
         planner_param.dt = planner_param.horizon_time / planner_param.num_horizon_length_up;
-
+        RCLCPP_INFO_STREAM(logger, "here");
         planner_param.cost_goal = block_diag(planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.P.bottomRows(planner_param.kappa).matrix(),\
                                             planner_param.P.bottomRows(planner_param.kappa).transpose().matrix()*planner_param.P.bottomRows(planner_param.kappa).matrix());
 
@@ -33,7 +36,7 @@ namespace diffflatformulation{
     }
 
     // create the relevant data for the neighbouring obstacles
-    void neighbouring_obs(PlannerParam& planner_param){
+    void neighbouring_obs(PlannerParam& planner_param, const rclcpp::Logger& logger){
         int N = planner_param.num_horizon_length;
         planner_param.x_obs_filt = Eigen::ArrayXXf::Ones(planner_param.x_obs.rows(),N);
         planner_param.y_obs_filt = Eigen::ArrayXXf::Ones(planner_param.x_obs.rows(),N);
@@ -66,7 +69,9 @@ namespace diffflatformulation{
     //pred_ego_pose 3x(horizon_length)
     //ref_poses 3x(horizon_length)
     // planner_param PlannerParam class stores paramter and computed values
-    void create_prob(const Eigen::ArrayXXf& ref_poses, const Eigen::Array3Xf& pred_ego_pose,const Eigen::ArrayXXf& pred_obs_poses, PlannerParam& planner_param){
+    void create_prob(const Eigen::ArrayXXf& ref_poses, const Eigen::Array3Xf& pred_ego_pose,const Eigen::ArrayXXf& pred_obs_poses, \
+                PlannerParam& planner_param, const rclcpp::Logger& logger){
+        RCLCPP_INFO_STREAM(logger, "in create prob");
         int num_obs = pred_obs_poses.rows();
         int num_horizon = planner_param.num_horizon_length;
         planner_param.x_ego.resize(1,num_horizon);
@@ -87,7 +92,8 @@ namespace diffflatformulation{
             planner_param.x_obs.col(i) =  pred_obs_poses.col(co);
             planner_param.y_obs.col(i) =  pred_obs_poses.col(co+1);
         }
-        neighbouring_obs(planner_param);
+        RCLCPP_INFO_STREAM(logger, "before neighbouring obs");
+        neighbouring_obs(planner_param, logger);
     }
 
 
@@ -198,7 +204,7 @@ namespace diffflatformulation{
     }
 
     void continous_collision_avoidance(PlannerParam& planner_param){
-        
+        planner_param.dummy_var = 3.0;
 
     }
 

@@ -1,7 +1,8 @@
 
 #include "qp_mpc_planner/bernstein_pol.hpp"
 namespace bernsteinpol{
-
+    
+    
     float binomialCoeff(float n, float k){
         if(k==0 || k==n){return 1;}
         return binomialCoeff(n-1,k-1) + binomialCoeff(n-1,k);
@@ -15,18 +16,20 @@ namespace bernsteinpol{
      * @param num horizon-steps
      * @return struct five_var : bernstein Matrices from (order 0 to 4th order) 
      */
-    five_var bernsteinCoeffOrder10(float n, float t_min, float t_max, AXXf t_actual, int num){
-
+    //bernsteinMatrix = bernsteinCoeffOrder10(10.0,total_time(0),total_time(num_length),total_time,horizon_length,logger);
+    five_var bernsteinCoeffOrder10(float n, float t_min, float t_max, AXXf t_actual, int num,const rclcpp::Logger& logger){
+        //RCLCPP_INFO_STREAM(logger, "inside bernsteinCoeffOrder10");
         five_var s;
         float l = t_max - t_min;
         AXXf t = (t_actual-t_min)/l;   // scaling the t to (0 to 1)
         AXXf P(num,(int)n+1), Pdot(num,(int)n+1), Pddot(num,(int)n+1); // n is the order of the polynominal , n order has n+1 coefficient
         AXXf Pdddot(num,(int)n+1),Pddddot(num,(int)n+1);
+        //RCLCPP_INFO_STREAM(logger, "after Pdddot");
         // P
         for(int i=0;i<=n;++i){
         P.col(i) = binomialCoeff(n,i)*pow(1-t,n-i)*pow(t,i);
         }
-
+        std::cerr<<" lofffffffl ";
         // Pdot
         Pdot.col(0) = -10.0 * pow(-t + 1, 9);
         Pdot.col(1) = -90.0 * t * pow(-t + 1, 8) + 10.0 * pow(-t + 1, 9);
@@ -91,13 +94,16 @@ namespace bernsteinpol{
      * @param t_plan planning time (in seconds)
      * @return struct five_var : bernstein Matrices from (order 0 to 4th order) 
      */
-    five_var computeBernstein(float horizon_length, float t_plan){
-        AXf total_time = AXf(horizon_length);
+    five_var computeBernstein(float horizon_length, float t_plan,const rclcpp::Logger&  logger){
+
+        AXf total_time = AXf(static_cast<int>(horizon_length));
+        int num_length = total_time.rows();
         total_time.setLinSpaced(horizon_length,0.0,t_plan);
 
         five_var bernsteinMatrix;
         //bernsteinCoeffOrder10(float n, float t_min, float t_max, Eigen::ArrayXXf t_actual, int num)
-        bernsteinMatrix = bernsteinCoeffOrder10(10.0,total_time(0),total_time(-1),total_time,horizon_length);
+        //RCLCPP_INFO_STREAM(logger, "before calling coff10");
+        bernsteinMatrix = bernsteinCoeffOrder10(10.0,total_time(0),total_time(num_length-1),total_time,horizon_length,logger);
         return bernsteinMatrix;
     }
 
@@ -138,15 +144,15 @@ namespace bernsteinpol{
      * @param t_plan planning time (in seconds)
      * @return struct five_var : bernstein Matrices from (order 0 to 4th order) 
      */
-    five_var solveBerstein(float horizon_length, float t_plan){
-        AXf total_time = AXf(horizon_length);
-        total_time.setLinSpaced(horizon_length,0.0,t_plan);
+    // five_var solveBerstein(float horizon_length, float t_plan){
+    //     AXf total_time = AXf(static_cast<int>(horizon_length));
+    //     total_time.setLinSpaced(horizon_length,0.0,t_plan);
 
-        five_var bernsteinMatrix;
-        //bernsteinCoeffOrder10(float n, float t_min, float t_max, Eigen::ArrayXXf t_actual, int num)
-        bernsteinMatrix = bernsteinCoeffOrder10(10.0,total_time(0),total_time(-1),total_time,horizon_length);
-        return bernsteinMatrix;
-    }
+    //     five_var bernsteinMatrix;
+    //     //bernsteinCoeffOrder10(float n, float t_min, float t_max, Eigen::ArrayXXf t_actual, int num)
+    //     bernsteinMatrix = bernsteinCoeffOrder10(10.0,total_time(0),total_time(-1),total_time,horizon_length);
+    //     return bernsteinMatrix;
+    // }
 }
 
 

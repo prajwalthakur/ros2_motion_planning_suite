@@ -53,10 +53,11 @@ target_include_directories(qp_mpc_class PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(qp_mpc_class PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
-target_link_libraries(qp_mpc_class
-  PRIVATE
+target_link_libraries(qp_mpc_class PRIVATE
+    eigen-quadprog::eigen-quadprog
     /hpipm/lib/libhpipm.so
     /blasfeo/lib/libblasfeo.so
+    
 )
 
 
@@ -70,6 +71,7 @@ target_include_directories(qp_mpc_planner_node PUBLIC
 target_compile_features(qp_mpc_planner_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
 target_link_libraries(qp_mpc_planner_node qp_mpc_class)
+
 
 install(TARGETS qp_mpc_planner_node
   DESTINATION lib/${PROJECT_NAME})
